@@ -2,6 +2,7 @@
 .env
 .python-version
 
+__pycache__/
 broadcast/
 cache/
 docs/
