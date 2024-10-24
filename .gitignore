@@ -6,4 +6,5 @@ __pycache__/
 broadcast/
 cache/
 docs/
+logs/
 out/

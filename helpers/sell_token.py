@@ -16,7 +16,7 @@ def sell_token(client: Web3, token_address: str, amount_in_token: int | float):
 
     public_key = get_public_key()
 
-    token_balance = get_token_balance(token_address, public_key)
+    token_balance = get_token_balance(client, token_address)
     if token_balance < amount_in_token:
         raise Exception("Insufficient funds")
 
@@ -36,7 +36,8 @@ def sell_token(client: Web3, token_address: str, amount_in_token: int | float):
     )
 
     txn = router.functions.swapExactTokensForETH(
-        amount_in_token,
+        # TODO: Check if this is the right amount
+        int(amount_in_token),
         0,
         token_to_eth_path,
         public_key,
