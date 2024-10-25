@@ -14,7 +14,9 @@ _stdout_handler.setLevel(logging.DEBUG)
 _stdout_handler.setFormatter(_formatter)
 
 _file_handler = logging.FileHandler(
-    "logs/{}.log".format(datetime.datetime.now().strftime("%Y_%m_%d"))
+    "logs/{}.log".format(
+        int(datetime.datetime.now().timestamp()),
+    )
 )
 
 _file_handler.setLevel(logging.DEBUG)
