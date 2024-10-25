@@ -1,45 +1,47 @@
-import time
 from web3 import Web3
 
-from log import log_info, log_info_buy, log_info_sell
-from helpers import buy_token, get_token_balance, sell_token
+from helpers import utils, models, signals
 
 
 def default_job(
     client: Web3,
     token_address: str,
-    current_price: int | float,
-    initial_price: int | float,
-):
+    initial_price_in_wei: int,
+) -> tuple[models.TransactionType, int, int, str | None]:
     """
     Default trading strategy
     - Buy if the price drops by -10%
-    - Sell 100% if -20%, 50% if +100%, 10% at +500%, +1000%, +5000%, +10000%, and all
+    - Sell 100% if -30%, 50% if +100%, 10% at +500%, +1000%, +5000%, +10000%, and all
       at +20000%
     """
 
-    # TODO: While true here
+    current_price = utils.get_token_price_in_wei(client, token_address)
+    token_balance = utils.get_token_balance(client, token_address)
 
-    token_balance = get_token_balance(client, token_address)
+    try:
+        if current_price < initial_price_in_wei * 0.9:
+            txn_hash = signals.buy(client, token_address, 1)
+            return (models.TransactionType.BUY, current_price, token_balance, txn_hash)
 
-    if current_price < initial_price * 0.9:
-        log_info_buy("Price dropped by -10%")
-        return buy_token(client, token_address, 0.10)
+        # -30% = -20% + -10% from the previous condition
+        elif current_price <= initial_price_in_wei * 0.7:
+            txn_hash = signals.sell(client, token_address, token_balance)
+            return (models.TransactionType.SELL, current_price, token_address, txn_hash)
 
-    elif current_price <= initial_price * 0.8:
-        log_info_sell("Price dropped by -20%")
-        # TODO: Add a stop loss ?
-        return sell_token(client, token_address, token_balance)
+        elif current_price >= initial_price_in_wei * 2:
+            txn_hash = signals.sell(client, token_address, token_balance * 0.5)
+            return (models.TransactionType.SELL, current_price, token_address, txn_hash)
 
-    elif current_price >= initial_price * 2:
-        log_info_sell("Price increased by 100%")
-        return sell_token(client, token_address, token_balance * 0.5)
+        for multiplier in [5, 10, 50, 100, 200]:
+            if current_price >= initial_price_in_wei * multiplier:
+                txn_hash = signals.sell(client, token_address, token_balance * 0.1)
+                return (
+                    models.TransactionType.SELL,
+                    current_price,
+                    token_address,
+                    txn_hash,
+                )
 
-    for multiplier in [5, 10, 50, 100, 200]:
-        if current_price >= initial_price * multiplier:
-            log_info_sell(f"Price increased by {multiplier}00%")
-            return sell_token(client, token_address, token_balance * 0.1)
-
-    log_info("HOLD")
-
-    return None
+        return (models.TransactionType.HOLD, current_price, token_balance, None)
+    except Exception as error:
+        return (models.TransactionType.ERROR, current_price, token_address, error)

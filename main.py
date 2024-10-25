@@ -1,37 +1,54 @@
-import random
-import time
+import colorama
 import dotenv
+import time
 
-from web3 import Web3
+dotenv.load_dotenv(dotenv_path=".env.production")
 
-from helpers import get_rpc_url
-from jobs import default_job
-
-dotenv.load_dotenv()
-
-client = Web3(Web3.HTTPProvider(get_rpc_url()))
-assert client.is_connected(), "Failed to connect client to RPC"
+from helpers import env, log, models, utils
+from jobs.default_job import default_job
 
 
-# TODO: Delete this or add it to a separate file
-def _simulate_trading(token_address: str, initial_price: str):
-    current_price = initial_price
+client = utils.get_client()
+if not client.is_connected():
+    raise ConnectionError(
+        "Failed to connect to client with RPC_URL={}".format(env.get_rpc_url())
+    )
 
-    for _ in range(100):
-        current_price = current_price * (1 + random.uniform(-0.1, 0.1))
 
-        default_job(
-            client,
-            token_address,
-            current_price,
-            initial_price,
+token_address = env.get_token_address()
+
+if not client.is_address(token_address):
+    raise ValueError(f"Invalid token address: {token_address}")
+
+initial_price_in_wei = utils.get_token_price_in_wei(client, token_address)
+
+print(f"Running default_job for {token_address}")
+
+while True:
+    try:
+        transaction_type, current_price_in_wei, token_balance_in_wei, message = (
+            default_job(client, token_address, initial_price_in_wei)
         )
 
-        time.sleep(1)
+        current_price_in_eth = client.from_wei(current_price_in_wei, "ether")
+        price_change_percent = (
+            (current_price_in_eth - client.from_wei(initial_price_in_wei, "ether"))
+            / client.from_wei(initial_price_in_wei, "ether")
+        ) * 100
 
+        liquidity = utils.get_token_liquidity(client, token_address)
 
-_simulate_trading(
-    # TODO: Add a real token address
-    token_address="0x5FbDB2315678afecb367f032d93F642f64180aa3",
-    initial_price=1,
-)
+        log.log_market_info(
+            token_address,
+            transaction_type,
+            current_price_in_eth,
+            price_change_percent,
+            liquidity,
+            message,
+        )
+
+    except Exception as error:
+        print(error)
+        break
+
+time.sleep(60)
