@@ -2,9 +2,6 @@ from web3 import Web3
 
 from helpers import env, utils
 
-_public_key = env.get_public_key()
-_eth_address = env.get_eth_contract_address()
-
 
 def buy(
     client: Web3,
@@ -17,10 +14,12 @@ def buy(
     """
 
     try:
+        public_key = env.get_public_key()
+
         if amount_in_wei < 0:
             raise Exception("Invalid amount")
 
-        balance = client.eth.get_balance(_public_key)
+        balance = client.eth.get_balance(public_key)
         if balance < amount_in_wei:
             raise Exception("Insufficient funds")
 
@@ -31,7 +30,7 @@ def buy(
         router = utils.get_router(client)
 
         eth_to_token_path = [
-            client.to_checksum_address(_eth_address),
+            client.to_checksum_address(env.get_eth_contract_address()),
             client.to_checksum_address(token_address),
         ]
 
@@ -44,7 +43,7 @@ def buy(
             amount_before_slippage * (1 - slippage_percent / 100)
         )
 
-        txn_count = client.eth.get_transaction_count(_public_key)
+        txn_count = client.eth.get_transaction_count(public_key)
         time_limit = client.eth.get_block("latest")["timestamp"] + 60 * 10  # 10 minutes
 
         _approve(client, token_address, amount_in_wei)
@@ -52,11 +51,11 @@ def buy(
         txn = router.functions.swapExactETHForTokens(
             amount_before_slippage,
             eth_to_token_path,
-            _public_key,
+            public_key,
             time_limit,
         ).build_transaction(
             {
-                "from": _public_key,
+                "from": public_key,
                 "value": amount_after_slippage,
                 "gas": utils.get_gas_price_for_transaction_in_wei(
                     client, token_address, amount_in_wei
@@ -80,9 +79,10 @@ def sell(
     """
     Sell a token on Uniswap V2
     """
-    amount_in_wei = int(amount_in_wei)
 
     try:
+        public_key = env.get_public_key()
+
         token_balance = utils.get_token_balance(client, token_address)
         if token_balance < amount_in_wei:
             raise Exception("Insufficient funds")
@@ -95,7 +95,7 @@ def sell(
 
         token_to_eth_path = [
             client.to_checksum_address(token_address),
-            client.to_checksum_address(_eth_address),
+            client.to_checksum_address(env.get_eth_contract_address()),
         ]
 
         amount_before_slippage = router.functions.getAmountsOut(
@@ -113,16 +113,16 @@ def sell(
             amount_before_slippage,
             amount_after_slippage,
             token_to_eth_path,
-            _public_key,
+            public_key,
             client.eth.get_block("latest")["timestamp"] + 60 * 10,  # 10 minutes,
         ).build_transaction(
             {
-                "from": _public_key,
+                "from": public_key,
                 "gas": utils.get_gas_price_for_transaction_in_wei(
                     client, token_address, amount_in_wei
                 ),
                 "gasPrice": utils.get_gas_price_in_wei(),
-                "nonce": client.eth.get_transaction_count(_public_key),
+                "nonce": client.eth.get_transaction_count(public_key),
             }
         )
 
@@ -137,6 +137,8 @@ def _approve(client: Web3, token_address: str, amount_in_wei: int):
     """
 
     try:
+        public_key = env.get_public_key()
+
         token_contract = client.eth.contract(
             address=token_address,
             abi=utils.get_abi(token_address),
@@ -147,12 +149,12 @@ def _approve(client: Web3, token_address: str, amount_in_wei: int):
             amount_in_wei,
         ).build_transaction(
             {
-                "from": _public_key,
+                "from": public_key,
                 "gas": utils.get_gas_price_for_transaction_in_wei(
                     client, token_address, amount_in_wei
                 ),
                 "gasPrice": utils.get_gas_price_in_wei(client),
-                "nonce": client.eth.get_transaction_count(_public_key),
+                "nonce": client.eth.get_transaction_count(public_key),
             }
         )
 

@@ -4,9 +4,6 @@ from web3 import Web3
 
 from helpers import env
 
-_public_key = env.get_public_key()
-_eth_contract_address = env.get_eth_contract_address()
-
 
 def get_client():
     """
@@ -79,7 +76,7 @@ def get_token_price_in_wei(client: Web3, token_address: str):
         router = get_router(client)
 
         path = [
-            client.to_checksum_address(_eth_contract_address),
+            client.to_checksum_address(env.get_eth_contract_address()),
             client.to_checksum_address(token_address),
         ]
 
@@ -101,7 +98,7 @@ def get_pair_address(client: Web3, token_address: str):
         factory = get_factory(client)
 
         return factory.functions.getPair(
-            client.to_checksum_address(_eth_contract_address),
+            client.to_checksum_address(env.get_eth_contract_address()),
             client.to_checksum_address(token_address),
         ).call()
     except Exception as error:
@@ -136,7 +133,7 @@ def get_token_balance(client: Web3, token_address: str):
                 address=client.to_checksum_address(token_address),
                 abi=get_abi(token_address),
             )
-            .functions.balanceOf(client.to_checksum_address(_public_key))
+            .functions.balanceOf(client.to_checksum_address(env.get_public_key()))
             .call()
         )
     except Exception as error:
@@ -164,7 +161,7 @@ def get_gas_price_for_transaction_in_wei(
     try:
         return client.eth.estimate_gas(
             {
-                "from": client.to_checksum_address(_public_key),
+                "from": client.to_checksum_address(env.get_public_key()),
                 "to": client.to_checksum_address(token_address),
                 "value": amount_in_wei,
             }

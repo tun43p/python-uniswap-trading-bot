@@ -1,61 +1,41 @@
-import datetime
 import logging
-import os
-import sys
-
 import colorama
 
+from helpers import models
 
-_logger = logging.getLogger()
-_logger.setLevel(logging.INFO)
-_formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
 
-_stdout_handler = logging.StreamHandler(sys.stdout)
-_stdout_handler.setLevel(logging.DEBUG)
-_stdout_handler.setFormatter(_formatter)
+def format_colorized(value, threshold, color_positive, color_negative):
+    """Return colorized string based on the threshold."""
 
-if not os.path.exists("logs/sessions"):
-    os.makedirs("logs/sessions")
+    color = color_positive if value >= threshold else color_negative
+    return f"{color}{value:.2f}%{colorama.Style.RESET_ALL}"
 
-_file_handler = logging.FileHandler(
-    "logs/sessions/{}.log".format(
-        int(datetime.datetime.now().timestamp()),
+
+def log_market_info(
+    token_address: str,
+    transaction_type: models.TransactionType,
+    price_eth: int | float,
+    price_change_percent: int | float,
+    liquidity_in_eth: int | float,
+    txn_hash: str | None,
+):
+    action_color = colorama.Back.YELLOW
+    if transaction_type == models.TransactionType.BUY:
+        action_color = colorama.Back.GREEN
+    elif (
+        transaction_type == models.TransactionType.SELL
+        and transaction_type == models.TransactionType.ERROR
+    ):
+        action_color = colorama.Back.RED
+
+    price_change_colorized_text = format_colorized(
+        float(price_change_percent), 0, colorama.Fore.GREEN, colorama.Fore.RED
     )
-)
 
-_file_handler.setLevel(logging.DEBUG)
-_file_handler.setFormatter(_formatter)
-
-
-_logger.addHandler(_file_handler)
-_logger.addHandler(_stdout_handler)
-
-
-def log_debug(message):
-    _logger.debug(message)
-
-
-def log_info(message):
-    _logger.info(message)
-
-
-def log_warning(message):
-    _logger.warning(message)
-
-
-def log_error(message):
-    _logger.error(message)
-
-
-def log_critical(message, exception: Exception = Exception):
-    _logger.critical(message)
-
-    raise exception(message)
-
-
-def log_info_buy(message):
-    _logger.info(f"{colorama.Back.GREEN}BUY{colorama.Style.RESET_ALL} | {message}")
-
-
-def log_info_sell(message):
-    _logger.info(f"{colorama.Back.RED}SELL{colorama.Style.RESET_ALL} | {message}")
+    print(
+        f"{colorama.Fore.BLUE}{token_address[:6]}...{token_address[-4:]} {action_color}[{transaction_type.name}]{colorama.Style.RESET_ALL} "
+        f"PRICE: {colorama.Fore.CYAN}{price_eth:.8f} ETH{colorama.Style.RESET_ALL} | "
+        f"CHANGE: {price_change_colorized_text} | "
+        f"LIQUIDITY: {colorama.Fore.YELLOW}{liquidity_in_eth}{colorama.Style.RESET_ALL}"
+        f"{f" | TXN HASH: {colorama.Fore.MAGENTA}{txn_hash}{colorama.Style.RESET_ALL}" if txn_hash else ''}"
+    )

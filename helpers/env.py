@@ -13,6 +13,14 @@ def _get_env_variable(name: str) -> str:
         raise Exception(f"Failed to get {name} variable") from error
 
 
+def get_token_address() -> str:
+    """
+    Get the token address
+    """
+
+    return _get_env_variable("TOKEN_ADDRESS")
+
+
 def get_public_key() -> str:
     """
     Get the public key of the wallet

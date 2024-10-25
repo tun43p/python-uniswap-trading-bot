@@ -4,6 +4,12 @@ from web3 import Web3
 from helpers import env
 
 
+def _get_token_address_test():
+    token_address = env.get_token_address()
+    print("token_address", token_address)
+    assert Web3.is_address(token_address), "Token address is invalid"
+
+
 def _get_public_key_test():
     public_key = env.get_public_key()
     print("public_key", public_key)
@@ -64,6 +70,7 @@ def _get_telegram_api_hash_test():
 
 def run_all_tests():
     tests = [
+        _get_token_address_test,
         _get_public_key_test,
         _get_private_key_test,
         _get_rpc_url_test,
