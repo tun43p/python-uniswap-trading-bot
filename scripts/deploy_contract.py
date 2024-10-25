@@ -1,3 +1,8 @@
+# Deploy a contract to the blockchain based on the contract name provided as an argument
+# to the script. The script uses the Forge CLI to deploy the contract to the specified
+# RPC_URL using the provided PRIVATE_KEY located in your env variables. The deployment
+# process is logged to a file in the logs directory.
+
 import datetime
 import dotenv
 import logging
