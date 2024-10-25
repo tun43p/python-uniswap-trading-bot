@@ -1,3 +1,4 @@
+from asyncio import sleep
 from web3 import Web3
 
 from helpers import env
@@ -62,12 +63,18 @@ def _get_telegram_api_hash_test():
 
 
 def run_all_tests():
-    _get_public_key_test()
-    _get_private_key_test()
-    _get_rpc_url_test()
-    _get_etherscan_api_key_test()
-    _get_eth_contract_address_test()
-    _get_uniswap_v2_router_contract_address_test()
-    _get_uniswap_v2_factory_contract_address_test()
-    _get_telegram_api_id_test()
-    _get_telegram_api_hash_test()
+    tests = [
+        _get_public_key_test,
+        _get_private_key_test,
+        _get_rpc_url_test,
+        _get_etherscan_api_key_test,
+        _get_eth_contract_address_test,
+        _get_uniswap_v2_router_contract_address_test,
+        _get_uniswap_v2_factory_contract_address_test,
+        _get_telegram_api_id_test,
+        _get_telegram_api_hash_test,
+    ]
+
+    for test in tests:
+        test()
+        sleep(5)

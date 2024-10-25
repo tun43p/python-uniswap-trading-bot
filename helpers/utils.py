@@ -58,7 +58,7 @@ def get_factory(client: Web3):
         raise Exception(f"Failed to get factory for contract {address}") from error
 
 
-def get_eth_price():
+def get_eth_price_in_usd():
     """
     Get the current price of Ethereum in USD
     """
@@ -71,7 +71,7 @@ def get_eth_price():
         raise Exception("Failed to get ETH price") from error
 
 
-def get_token_price(client: Web3, token_address: str):
+def get_token_price_in_wei(client: Web3, token_address: str):
     """
     Get the current price of a token in ETH
     """
@@ -83,7 +83,10 @@ def get_token_price(client: Web3, token_address: str):
             client.to_checksum_address(token_address),
         ]
 
-        return router.functions.getAmountsOut(1, path).call()[1] / 10**18
+        return router.functions.getAmountsOut(
+            client.to_wei(1, "ether"),
+            path,
+        ).call()[1]
     except Exception as error:
         raise Exception("Token is not listed on Uniswap") from error
 
@@ -117,8 +120,6 @@ def get_token_liquidity(client: Web3, token_address: str):
             abi=get_abi(pair_address),
         )
 
-        # Why * 2?
-        # return pair.functions.getReserves().call()[0] * 2
         return pair.functions.getReserves().call()[0]
     except Exception as error:
         raise Exception("Token is not listed on Uniswap") from error
@@ -132,29 +133,29 @@ def get_token_balance(client: Web3, token_address: str):
     try:
         return (
             client.eth.contract(
-                address=token_address,
+                address=client.to_checksum_address(token_address),
                 abi=get_abi(token_address),
             )
-            .functions.balanceOf(_public_key)
+            .functions.balanceOf(client.to_checksum_address(_public_key))
             .call()
         )
     except Exception as error:
         raise Exception("Failed to get token balance") from error
 
 
-def get_gas_price(client: Web3):
+def get_gas_price_in_wei(client: Web3):
     """
     Get the current gas price
     """
 
     try:
-        return client.from_wei(client.eth.gas_price, "gwei")
+        return client.eth.gas_price
     except Exception as error:
         raise Exception("Failed to get gas price") from error
 
 
-def get_gas_price_for_transaction(
-    client: Web3, token_address: str, amount_in_eth: int | float
+def get_gas_price_for_transaction_in_wei(
+    client: Web3, token_address: str, amount_in_wei: int
 ):
     """
     Get the gas estimation for a transaction
@@ -163,9 +164,9 @@ def get_gas_price_for_transaction(
     try:
         return client.eth.estimate_gas(
             {
-                "from": _public_key,
-                "to": token_address,
-                "value": client.to_wei(amount_in_eth, "ether"),
+                "from": client.to_checksum_address(_public_key),
+                "to": client.to_checksum_address(token_address),
+                "value": amount_in_wei,
             }
         )
     except Exception as error:

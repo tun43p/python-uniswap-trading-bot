@@ -7,10 +7,7 @@ from helpers import utils, models, signals
 def default_job(
     client: Web3,
     token_address: str,
-    # TODO: Have to pass the initial price / current price here / token_balance ?
-    current_price: int | float,
     initial_price: int | float,
-    token_balance: int,
 ) -> tuple[models.TransactionType, str | None]:
     """
     Default trading strategy
@@ -18,6 +15,9 @@ def default_job(
     - Sell 100% if -30%, 50% if +100%, 10% at +500%, +1000%, +5000%, +10000%, and all
       at +20000%
     """
+
+    current_price = utils.get_token_price(client, token_address)
+    token_balance = utils.get_token_balance(client, token_address)
 
     try:
         if current_price < initial_price * 0.9:

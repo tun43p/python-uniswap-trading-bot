@@ -9,7 +9,7 @@ _eth_address = env.get_eth_contract_address()
 def buy(
     client: Web3,
     token_address: str,
-    amount_in_eth: int | float,
+    amount_in_wei: int,
     slippage_percent: int | float = 0.1,
 ):
     """
@@ -17,12 +17,15 @@ def buy(
     """
 
     try:
+        if amount_in_wei < 0:
+            raise Exception("Invalid amount")
+
         balance = client.eth.get_balance(_public_key)
-        if balance < client.to_wei(amount_in_eth, "ether"):
+        if balance < amount_in_wei:
             raise Exception("Insufficient funds")
 
         liquidity = utils.get_token_liquidity(client, token_address)
-        if liquidity < client.to_wei(amount_in_eth, "ether"):
+        if liquidity < amount_in_wei:
             raise Exception("Insufficient liquidity")
 
         router = utils.get_router(client)
@@ -33,18 +36,18 @@ def buy(
         ]
 
         amount_before_slippage = router.functions.getAmountsOut(
-            client.to_wei(amount_in_eth, "ether"),
+            amount_in_wei,
             eth_to_token_path,
         ).call()[1]
 
-        amount_after_slippage = client.to_wei(
-            amount_in_eth * (1 - slippage_percent / 100), "ether"
+        amount_after_slippage = int(
+            amount_before_slippage * (1 - slippage_percent / 100)
         )
 
         txn_count = client.eth.get_transaction_count(_public_key)
         time_limit = client.eth.get_block("latest")["timestamp"] + 60 * 10  # 10 minutes
 
-        _approve(client, token_address, amount_in_eth)
+        _approve(client, token_address, amount_in_wei)
 
         txn = router.functions.swapExactETHForTokens(
             amount_before_slippage,
@@ -55,10 +58,10 @@ def buy(
             {
                 "from": _public_key,
                 "value": amount_after_slippage,
-                "gas": utils.get_gas_price_for_transaction(
-                    client, token_address, amount_in_eth
+                "gas": utils.get_gas_price_for_transaction_in_wei(
+                    client, token_address, amount_in_wei
                 ),
-                "gasPrice": client.to_wei(utils.get_gas_price(), "gwei"),
+                "gasPrice": utils.get_gas_price_in_wei(),
                 "nonce": txn_count,
             }
         )
@@ -71,20 +74,21 @@ def buy(
 def sell(
     client: Web3,
     token_address: str,
-    amount_in_eth: int,
+    amount_in_wei: int,
     slippage_percent: int | float = 0.1,
 ):
     """
     Sell a token on Uniswap V2
     """
+    amount_in_wei = int(amount_in_wei)
 
     try:
         token_balance = utils.get_token_balance(client, token_address)
-        if token_balance < amount_in_eth:
+        if token_balance < amount_in_wei:
             raise Exception("Insufficient funds")
 
         liquidity = utils.get_token_liquidity(client, token_address)
-        if liquidity < amount_in_eth:
+        if liquidity < amount_in_wei:
             raise Exception("Insufficient liquidity")
 
         router = utils.get_router(client)
@@ -95,15 +99,15 @@ def sell(
         ]
 
         amount_before_slippage = router.functions.getAmountsOut(
-            client.to_wei(amount_in_eth, "ether"),
+            amount_in_wei,
             token_to_eth_path,
         ).call()[1]
 
-        amount_after_slippage = client.to_wei(
-            amount_in_eth * (1 - slippage_percent / 100), "ether"
+        amount_after_slippage = int(
+            amount_before_slippage * (1 - slippage_percent / 100)
         )
 
-        _approve(client, token_address, amount_in_eth)
+        _approve(client, token_address, amount_in_wei)
 
         txn = router.functions.swapExactTokensForETH(
             amount_before_slippage,
@@ -114,10 +118,10 @@ def sell(
         ).build_transaction(
             {
                 "from": _public_key,
-                "gas": utils.get_gas_price_for_transaction(
-                    client, token_address, amount_in_eth
+                "gas": utils.get_gas_price_for_transaction_in_wei(
+                    client, token_address, amount_in_wei
                 ),
-                "gasPrice": client.to_wei(utils.get_gas_price(), "gwei"),
+                "gasPrice": utils.get_gas_price_in_wei(),
                 "nonce": client.eth.get_transaction_count(_public_key),
             }
         )
@@ -127,7 +131,7 @@ def sell(
         raise Exception("Sell failed") from error
 
 
-def _approve(client: Web3, token_address: str, amount_in_eth: int):
+def _approve(client: Web3, token_address: str, amount_in_wei: int):
     """
     Approve a token for spending by another address (e.g., Uniswap Router)
     """
@@ -140,14 +144,14 @@ def _approve(client: Web3, token_address: str, amount_in_eth: int):
 
         txn = token_contract.functions.approve(
             client.to_checksum_address(env.get_uniswap_v2_router_contract_address()),
-            client.to_wei(amount_in_eth, "ether"),
+            amount_in_wei,
         ).build_transaction(
             {
                 "from": _public_key,
-                "gas": utils.get_gas_price_for_transaction(
-                    client, token_address, amount_in_eth
+                "gas": utils.get_gas_price_for_transaction_in_wei(
+                    client, token_address, amount_in_wei
                 ),
-                "gasPrice": client.to_wei(utils.get_gas_price(), "gwei"),
+                "gasPrice": utils.get_gas_price_in_wei(client),
                 "nonce": client.eth.get_transaction_count(_public_key),
             }
         )
@@ -172,5 +176,5 @@ def _sign(client: Web3, txn: dict, is_approval: bool = False):
         return txn_hash
     except Exception as error:
         raise Exception(
-            f"{"Approval" if is_approval else "Transaction"} failed"
+            f"{'Approval' if is_approval else 'Transaction'} failed"
         ) from error

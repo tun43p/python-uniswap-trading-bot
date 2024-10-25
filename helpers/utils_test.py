@@ -1,3 +1,4 @@
+from asyncio import sleep
 from web3 import Web3
 
 from helpers import env, utils
@@ -7,7 +8,7 @@ def _get_abi_test(token_address: str):
     print("Test: get_abi")
 
     eth_abi = utils.get_abi(env.get_eth_contract_address())
-    print("weth_abi", eth_abi)
+    print("eth_abi", eth_abi)
     assert eth_abi is not None, "ABI is None"
 
     router_abi = utils.get_abi(env.get_uniswap_v2_router_contract_address())
@@ -35,16 +36,16 @@ def _get_factory_test(client: Web3):
     assert factory is not None, "Factory is None"
 
 
-def _get_eth_price_test():
-    eth_price = utils.get_eth_price()
-    print("eth_price", eth_price)
-    assert eth_price is not None, "ETH price is None"
+def _get_eth_price_in_usd_test():
+    eth_price_in_usd = utils.get_eth_price_in_usd()
+    print("eth_price", eth_price_in_usd, "$")
+    assert eth_price_in_usd is not None, "ETH price is None"
 
 
-def _get_token_price_test(client: Web3, token_address: str):
-    token_price = utils.get_token_price(client, token_address)
-    print("token_price", token_price)
-    assert token_price is not None, "Token price is None"
+def _get_token_price_in_wei(client: Web3, token_address: str):
+    token_price_in_wei = utils.get_token_price_in_wei(client, token_address)
+    print("token_price", token_price_in_wei)
+    assert token_price_in_wei is not None, "Token price is None"
 
 
 def _get_pair_address_test(client: Web3, token_address: str):
@@ -68,26 +69,29 @@ def _get_token_balance_test(client: Web3, token_address: str):
     assert token_balance is not None, "Token balance is None"
 
 
-def _get_gas_price_test(client: Web3):
-    gas_price = utils.get_gas_price(client)
-    print("gas_price", gas_price)
-    assert gas_price is not None, "Gas price is None"
+def _get_gas_price_in_wei_test(client: Web3):
+    gas_price_in_wei = utils.get_gas_price_in_wei(client)
+    print("gas_price_in_wei", gas_price_in_wei)
+    assert gas_price_in_wei is not None, "Gas price is None"
 
 
-def _get_gas_price_for_transaction_test(client: Web3, token_address: str):
-    gas_price = utils.get_gas_price_for_transaction(client, token_address)
-    print("gas_price", gas_price)
-    assert gas_price is not None, "Gas price is None"
+def _get_gas_price_for_transaction_in_wei_test(client: Web3, token_address: str):
+    gas_price_for_transaction_in_wei = utils.get_gas_price_for_transaction_in_wei(
+        client, token_address, 1
+    )
+
+    print("gas_price_for_transaction_in_wei", gas_price_for_transaction_in_wei)
+    assert gas_price_for_transaction_in_wei is not None, "Gas price is None"
 
 
 def run_all_tests(client: Web3, token_address: str):
     _get_abi_test(token_address)
     _get_router_test(client)
     _get_factory_test(client)
-    _get_eth_price_test()
-    _get_token_price_test(client, token_address)
+    _get_eth_price_in_usd_test()
+    _get_token_price_in_wei(client, token_address)
     _get_pair_address_test(client, token_address)
     _get_token_liquidity_test(client, token_address)
     _get_token_balance_test(client, token_address)
-    _get_gas_price_test(client)
-    _get_gas_price_for_transaction_test(client, token_address)
+    _get_gas_price_in_wei_test(client)
+    _get_gas_price_for_transaction_in_wei_test(client, token_address)
