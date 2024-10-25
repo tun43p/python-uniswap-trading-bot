@@ -1,5 +1,6 @@
 import datetime
 import logging
+import os
 import sys
 
 import colorama
@@ -13,8 +14,11 @@ _stdout_handler = logging.StreamHandler(sys.stdout)
 _stdout_handler.setLevel(logging.DEBUG)
 _stdout_handler.setFormatter(_formatter)
 
+if not os.path.exists("logs/sessions"):
+    os.makedirs("logs/sessions")
+
 _file_handler = logging.FileHandler(
-    "logs/{}.log".format(
+    "logs/sessions/{}.log".format(
         int(datetime.datetime.now().timestamp()),
     )
 )

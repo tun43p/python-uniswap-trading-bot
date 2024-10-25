@@ -19,8 +19,11 @@ contract_name = sys.argv[1]
 
 dotenv.load_dotenv()
 
+if not os.path.exists("logs/contracts"):
+    os.makedirs("logs/contracts")
+
 logging.basicConfig(
-    filename="logs/{}_{}_deploy.log".format(
+    filename="logs/contracts/{}_{}_deploy.log".format(
         contract_name, int(datetime.datetime.now().timestamp())
     ),
     level=logging.INFO,
@@ -28,21 +31,21 @@ logging.basicConfig(
 )
 
 RPC_URL = os.environ.get("RPC_URL")
-PRIVATE_KEY = os.environ.get("PRIVATE_KEY")
+DEPLOYER_PRIVATE_KEY = os.environ.get("DEPLOYER_PRIVATE_KEY")
 
 if not RPC_URL:
     logging.error("RPC_URL environment variable not set.")
     raise ValueError("RPC_URL environment variable not set")
 
-if not PRIVATE_KEY:
-    logging.error("PRIVATE_KEY environment variable not set.")
-    raise ValueError("PRIVATE_KEY environment variable not set")
+if not DEPLOYER_PRIVATE_KEY:
+    logging.error("DEPLOYER_PRIVATE_KEY environment variable not set.")
+    raise ValueError("DEPLOYER_PRIVATE_KEY environment variable not set")
 
 logging.info(f"Deploying contract {contract_name} to {RPC_URL}")
 print(f"Deploying contract {contract_name} to {RPC_URL}")
 
 command = (
-    f"cd contracts && forge create --rpc-url {RPC_URL} --private-key {PRIVATE_KEY} "
+    f"cd contracts && forge create --rpc-url {RPC_URL} --private-key {DEPLOYER_PRIVATE_KEY} "
     f"src/{contract_name}.sol:{contract_name}"
 )
 

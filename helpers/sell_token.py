@@ -1,44 +1,63 @@
 from web3 import Web3
 
+from env import Env
 from .get_abi_from_etherscan import get_abi_from_etherscan
-from .get_env_variables import (
-    get_private_key,
-    get_public_key,
-    get_uniswap_v2_router_contract_address,
-)
 from .get_token_balance import get_token_balance
 
 
-def sell_token(client: Web3, token_address: str, amount_in_token: int | float):
+def sell_token(
+    client: Web3,
+    token_address: str,
+    amount_in_token: int,
+    slippage_percent: int | float = 0.1,
+):
     """
     Sell a token on Uniswap V2
     """
 
-    public_key = get_public_key()
+    # TODO: Fetch atcual gas price and fees
 
-    token_balance = get_token_balance(client, token_address)
-    if token_balance < amount_in_token:
-        raise Exception("Insufficient funds")
+    public_key = Env.public_key()
 
-    token_to_eth_path = [
-        client.to_checksum_address(token_address),
-        client.to_checksum_address("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"),
-    ]
+    # token_balance = get_token_balance(client, token_address)
+    # if token_balance < amount_in_token:
+    #     raise Exception("Insufficient funds")
 
-    txn_count = client.eth.get_transaction_count(public_key)
-    time_limit = client.eth.get_block("latest")["timestamp"] + 60 * 10  # 10 minutes
-
-    uniswap_v2_router_contract_address = get_uniswap_v2_router_contract_address()
-
+    uniswap_v2_router_contract_address = Env.uniswap_v2_router_contract_address()
     router = client.eth.contract(
         address=uniswap_v2_router_contract_address,
         abi=get_abi_from_etherscan(uniswap_v2_router_contract_address),
     )
 
+    token_to_eth_path = [
+        client.to_checksum_address(token_address),
+        client.to_checksum_address(
+            Env.eth_contract_address()
+            # if Env.is_local_network()
+            # else Env.weth_contract_address()
+        ),
+    ]
+
+    # TODO: Fix slippage
+
+    # amount_before_slippage = router.functions.getAmountsOut(
+    #     client.to_wei(amount_in_token, "ether"),
+    #     token_to_eth_path,
+    # ).call()[1]
+
+    amount_before_slippage = client.to_wei(amount_in_token, "ether")
+    amount_after_slippage = client.to_wei(
+        amount_in_token * (1 - slippage_percent / 100), "ether"
+    )
+
+    txn_count = client.eth.get_transaction_count(public_key)
+    time_limit = client.eth.get_block("latest")["timestamp"] + 60 * 10  # 10 minutes
+
+    # TODO: Approve token before selling
+
     txn = router.functions.swapExactTokensForETH(
-        # TODO: Check if this is the right amount
-        int(amount_in_token),
-        0,
+        amount_before_slippage,
+        amount_after_slippage,
         token_to_eth_path,
         public_key,
         time_limit,
@@ -51,7 +70,7 @@ def sell_token(client: Web3, token_address: str, amount_in_token: int | float):
         }
     )
 
-    signed_txn = client.eth.account.sign_transaction(txn, get_private_key())
+    signed_txn = client.eth.account.sign_transaction(txn, Env.private_key())
     txn_hash = client.eth.send_raw_transaction(signed_txn.raw_transaction)
 
     if client.eth.wait_for_transaction_receipt(txn_hash)["status"] != 1:

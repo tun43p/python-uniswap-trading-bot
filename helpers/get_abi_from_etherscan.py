@@ -1,6 +1,6 @@
 import requests
 
-from .get_env_variables import get_etherscan_api_key
+from env import Env
 
 
 def get_abi_from_etherscan(address: str):
@@ -14,6 +14,6 @@ def get_abi_from_etherscan(address: str):
             "module": "contract",
             "action": "getabi",
             "address": address,
-            "apikey": get_etherscan_api_key(),
+            "apikey": Env.etherscan_api_key(),
         },
     ).json()["result"]

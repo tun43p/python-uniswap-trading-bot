@@ -2,6 +2,8 @@
 .env
 .python-version
 
+*.session*
+
 __pycache__/
 broadcast/
 cache/
