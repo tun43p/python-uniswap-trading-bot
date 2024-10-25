@@ -88,7 +88,6 @@ def get_token_price_in_wei(client: Web3, token_address: str):
         raise Exception("Token is not listed on Uniswap") from error
 
 
-# TODO: To get_pair ?
 def get_pair_address(client: Web3, token_address: str):
     """
     Get the pair address of a token with ETH

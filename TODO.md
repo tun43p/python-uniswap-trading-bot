@@ -1,0 +1,5 @@
+- [ ] Setup Dockefile
+- [ ] Setup Python file to launch multiple Dokcer containers
+- [ ] Calculate volaitility of the stock
+- [ ] Get tokens from Telegram and launch all the containers
+- [ ] Create multiples jobs

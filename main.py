@@ -38,9 +38,6 @@ while True:
 
         liquidity = utils.get_token_liquidity(client, token_address)
 
-        # TODO: Calculate volatility
-        # volatility = utils.calculate_volatility(client, token_address)
-
         log.log_market_info(
             token_address,
             transaction_type,
