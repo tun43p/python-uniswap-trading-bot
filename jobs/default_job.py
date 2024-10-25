@@ -1,18 +1,17 @@
 from enum import Enum
 from web3 import Web3
 
-from helpers import buy_token, get_token_balance, sell_token
-from models import TransactionType
+from helpers import utils, models, signals
 
 
 def default_job(
     client: Web3,
     token_address: str,
-    # TODO: Have to pass the current price here ?
+    # TODO: Have to pass the initial price / current price here / token_balance ?
     current_price: int | float,
     initial_price: int | float,
     token_balance: int,
-) -> tuple[TransactionType, str | None]:
+) -> tuple[models.TransactionType, str | None]:
     """
     Default trading strategy
     - Buy if the price drops by -10%
@@ -22,22 +21,23 @@ def default_job(
 
     try:
         if current_price < initial_price * 0.9:
-            txn_hash = buy_token(client, token_address, 1)
-            return (TransactionType.BUY, txn_hash)
+            txn_hash = signals.buy(client, token_address, 1)
+            return (models.TransactionType.BUY, txn_hash)
 
+        # -30% = -20% + -10% from the previous condition
         elif current_price <= initial_price * 0.7:
-            txn_hash = sell_token(client, token_address, token_balance)
-            return (TransactionType.SELL, txn_hash)
+            txn_hash = signals.sell(client, token_address, token_balance)
+            return (models.TransactionType.SELL, txn_hash)
 
         elif current_price >= initial_price * 2:
-            txn_hash = sell_token(client, token_address, token_balance * 0.5)
-            return (TransactionType.SELL, txn_hash)
+            txn_hash = signals.sell(client, token_address, token_balance * 0.5)
+            return (models.TransactionType.SELL, txn_hash)
 
         for multiplier in [5, 10, 50, 100, 200]:
             if current_price >= initial_price * multiplier:
-                txn_hash = sell_token(client, token_address, token_balance * 0.1)
-                return (TransactionType.SELL, txn_hash)
+                txn_hash = signals.sell(client, token_address, token_balance * 0.1)
+                return (models.TransactionType.SELL, txn_hash)
 
-        return (TransactionType.HOLD, None)
+        return (models.TransactionType.HOLD, None)
     except Exception as error:
-        return (TransactionType.ERROR, error)
+        return (models.TransactionType.ERROR, error)

@@ -1,12 +1,12 @@
 .DS_Store
-.env
+.env*
+!.env.example
 .python-version
 
+*.log
 *.session*
 
 __pycache__/
-broadcast/
 cache/
 docs/
 logs/
-out/
