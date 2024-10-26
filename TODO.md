@@ -3,3 +3,4 @@
 - [ ] Calculate volaitility of the stock
 - [ ] Get tokens from Telegram and launch all the containers
 - [ ] Create multiples jobs
+- [ ] Create a logger to log to a file, to websocket and to Telegram
