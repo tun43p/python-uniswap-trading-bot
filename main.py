@@ -1,19 +1,17 @@
-import colorama
 import dotenv
 import time
-
-dotenv.load_dotenv(dotenv_path=".env.production")
 
 from helpers import env, log, models, utils
 from jobs.default_job import default_job
 
+
+dotenv.load_dotenv(dotenv_path=".env")
 
 client = utils.get_client()
 if not client.is_connected():
     raise ConnectionError(
         "Failed to connect to client with RPC_URL={}".format(env.get_rpc_url())
     )
-
 
 token_address = env.get_token_address()
 
@@ -22,6 +20,7 @@ if not client.is_address(token_address):
 
 initial_price_in_wei = utils.get_token_price_in_wei(client, token_address)
 
+# TODO: Style this log message
 print(f"Running default_job for {token_address}")
 
 while True:

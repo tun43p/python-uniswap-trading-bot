@@ -1,7 +1,7 @@
 import os
 import dotenv
 
-dotenv.load_dotenv(dotenv_path=".env.production")
+dotenv.load_dotenv(dotenv_path=".env")
 
 test_token_address = os.environ.get("TEST_TOKEN_ADDRESS")
 if test_token_address is None:
