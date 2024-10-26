@@ -1,6 +1,8 @@
+- [ ] Setup Ruff has linter
 - [ ] Setup Dockefile
 - [ ] Setup Python file to launch multiple Dokcer containers
 - [ ] Calculate volaitility of the stock
 - [ ] Get tokens from Telegram and launch all the containers
 - [ ] Create multiples jobs
 - [ ] Create a logger to log to a file, to websocket and to Telegram
+- [ ] Update Python version for local and Docker to match the same version
