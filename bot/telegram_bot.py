@@ -51,8 +51,12 @@ docker_client = DockerClient(base_url=docker_context)
 telegram_client = TelegramClient(BOT_NAME, telegram_api_id, telegram_api_hash)
 
 
-async def _log(event: events.NewMessage.Event, message: str):
-    print(message)
+async def _log(
+    event: events.NewMessage.Event, message: str, without_print: bool = False
+):
+    if not without_print:
+        print(message)
+
     await telegram_client.send_message(
         entity=event.message.chat_id,
         message=message,
@@ -162,10 +166,19 @@ async def _new_message_handler(event: events.NewMessage.Event):
             await _start_command(event)
         elif message.startswith("/stop") and "0x" in message:
             await _stop_command(event)
-        elif message.startswith("/stop-all"):
+        elif message.startswith("/stop_all"):
             await _stop_all_command(event)
         elif message.startswith("/status"):
             await _status_command(event)
+        elif message.startswith("/help"):
+            await _log(
+                event,
+                "/trade 0x...: Start trading with the token\n"
+                "/stop 0x...: Stop trading with the token\n"
+                "/stop_all: Stop trading with all tokens\n"
+                "/status: Get the status of the trading\n",
+                without_print=True,
+            )
 
     except Exception as error:
         await _log(event, f"Failed to process command: {error}")
