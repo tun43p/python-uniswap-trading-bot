@@ -12,8 +12,12 @@ import websockets
 # The key is the token address and the value is the WebSocket client.
 connected_clients = {}
 
-if os.path.exists("env/limencello.env"):
-    dotenv.load_dotenv(dotenv_path="env/limoncello.env")
+BOT_NAME = os.environ.get("BOT_NAME") if os.environ.get("BOT_NAME") else "smart"
+
+if os.path.exists(f"env/{BOT_NAME}.env"):
+    dotenv.load_dotenv(dotenv_path=f"env/{BOT_NAME}.env")
+else:
+    raise ValueError(f"env/{BOT_NAME}.env is not found")
 
 docker_context = os.environ.get("DOCKER_CONTEXT")
 if not docker_context:
@@ -27,7 +31,13 @@ telegram_api_hash = os.environ.get("TELEGRAM_API_HASH")
 if not telegram_api_hash:
     raise ValueError("TELEGRAM_API_HASH is not set")
 
-BOT_NAME = "limoncello"
+telegram_bot_token = os.environ.get("TELEGRAM_BOT_TOKEN")
+if not telegram_bot_token:
+    raise ValueError("TELEGRAM_BOT_TOKEN is not set")
+
+telegram_channel_id = os.environ.get("TELEGRAM_CHANNEL_ID")
+if not telegram_channel_id:
+    raise ValueError("TELEGRAM_CHANNEL_ID is not set")
 
 if os.environ.get("TOKEN_ADDRESS"):
     del os.environ["TOKEN_ADDRESS"]
@@ -142,6 +152,11 @@ async def _status_command(event: events.NewMessage.Event):
 async def _new_message_handler(event: events.NewMessage.Event):
     message = event.message.message
 
+    print(event)
+
+    if event.is_channel:  # Vérifiez si c'est le bon canal
+        print(f"Channel ID: {event.chat.id}")
+
     try:
         if message.startswith("/trade") and "0x" in message:
             await _start_command(event)
@@ -194,14 +209,18 @@ async def _handle_websocket_connection(
         connected_clients.pop(path, None)
 
 
-async def _limoncello():
+async def _main():
     try:
-        await telegram_client.start()
+        capitalize_bot_name = BOT_NAME.replace("_", " ").replace("-", " ").title()
+
+        await telegram_client.start(bot_token=telegram_bot_token)
 
         if not telegram_client.is_connected():
             raise ConnectionError(
                 "Failed to connect to Telegram with API_ID={}".format(telegram_api_id)
             )
+
+        # telegram_channel_entity = await telegram_client.get_entity(telegram_channel_id)
 
         if len(docker_client.images.list(name=docker_image_tag)) > 0:
             print("Removing existing Docker containers...")
@@ -231,7 +250,6 @@ async def _limoncello():
 
         print("Docker image built!")
 
-        # TODO: Listen only for SMART ETH SIGNALS
         telegram_client.add_event_handler(
             _new_message_handler,
             events.NewMessage(),
@@ -252,10 +270,10 @@ async def _limoncello():
         )
 
         async with websocket_server:
-            print("Limoncello started!")
+            print(f"{capitalize_bot_name} started!")
             await telegram_client.run_until_disconnected()
     except Exception as error:
-        print(f"Failed to start Limoncello: {error}")
+        print(f"Failed to start {capitalize_bot_name}: {error}")
 
 
-telegram_client.loop.run_until_complete(_limoncello())
+telegram_client.loop.run_until_complete(_main())
