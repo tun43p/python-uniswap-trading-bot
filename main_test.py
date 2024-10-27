@@ -3,7 +3,7 @@ import dotenv
 from helpers import environment, utils
 from tests import utils_test
 
-dotenv.load_dotenv(dotenv_path=".env")
+dotenv.load_dotenv(dotenv_path="env/local.env")
 
 print("Env loaded")
 print("Connecting to client")

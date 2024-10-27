@@ -1,10 +1,12 @@
+import os
 import dotenv
 import time
 
 from helpers import environment, logger, utils
 from jobs.default_job import default_job
 
-dotenv.load_dotenv(dotenv_path=".env")
+if os.path.exists("env/local.env") and not environment.get_websocket_uri():
+    dotenv.load_dotenv(dotenv_path="env/local.env")
 
 
 def main():

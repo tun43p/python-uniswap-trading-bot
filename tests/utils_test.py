@@ -1,20 +1,20 @@
 from web3 import Web3
 
-from helpers import environment, utils
+from helpers import constants, environment, utils
 
 
 def _get_abi_test(token_address: str):
     print("Test: get_abi")
 
-    eth_abi = utils.get_abi(environment.get_eth_contract_address())
+    eth_abi = utils.get_abi(constants.WETH_CONTRACT_ADDRESS)
     print("eth_abi", eth_abi)
     assert eth_abi is not None, "ABI is None"
 
-    router_abi = utils.get_abi(environment.get_uniswap_v2_router_contract_address())
+    router_abi = utils.get_abi(constants.UNISWAP_V2_ROUTER_CONTRACT_ADDRESS)
     print("router_abi", router_abi)
     assert router_abi is not None, "ABI is None"
 
-    factory_abi = utils.get_abi(environment.get_uniswap_v2_factory_contract_address())
+    factory_abi = utils.get_abi(constants.UNISWAP_V2_FACTORY_CONTRACT_ADDRESS)
     print("factory_abi", factory_abi)
     assert factory_abi is not None, "ABI is None"
 

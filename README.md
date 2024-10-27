@@ -27,9 +27,9 @@ To install the dependencies, please do: `pip3 install -r requirements.txt`.
 
 ### Setup the environment variables
 
-To setup the environment variables, please do: `cp .env.example .env`.
+To setup the environment variables, please do: `cp .env.example env/local.env`.
 
-Then, please fill the `.env` file with the correct values.
+Then, please fill the `local.env` file with the correct values.
 
 ### Start a single job
 

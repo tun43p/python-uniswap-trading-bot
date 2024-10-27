@@ -7,34 +7,41 @@ from telethon import events, TelegramClient
 from web3 import Web3
 import websockets
 
-from helpers import environment
-
 # This is a global variable, which is not a good practice, but it is used for
 # simplicity. It is used to store the connected clients to the WebSocket server.
 # The key is the token address and the value is the WebSocket client.
 connected_clients = {}
 
-if os.path.exists(".env"):
-    dotenv.load_dotenv(dotenv_path=".env")
+if os.path.exists("env/limencello.env"):
+    dotenv.load_dotenv(dotenv_path="env/limoncello.env")
+
+docker_context = os.environ.get("DOCKER_CONTEXT")
+if not docker_context:
+    raise ValueError("DOCKER_CONTEXT is not set")
+
+telegram_api_id = os.environ.get("TELEGRAM_API_ID")
+if not telegram_api_id:
+    raise ValueError("TELEGRAM_API_ID is not set")
+
+telegram_api_hash = os.environ.get("TELEGRAM_API_HASH")
+if not telegram_api_hash:
+    raise ValueError("TELEGRAM_API_HASH is not set")
 
 BOT_NAME = "limoncello"
 
-os.environ["TOKEN_ADDRESS"] = ""
-os.environ["WEBSOCKET_URL"] = "ws://0.0.0.0:8765"
+if os.environ.get("TOKEN_ADDRESS"):
+    del os.environ["TOKEN_ADDRESS"]
 
-telegram_client = TelegramClient(
-    BOT_NAME,
-    environment.get_telegram_api_id(),
-    environment.get_telegram_api_hash(),
-)
+if not os.environ.get("WEBSOCKET_URI"):
+    os.environ["WEBSOCKET_URI"] = "ws://0.0.0.0:8765"
 
 docker_image_tag = f"tun43p/{BOT_NAME}"
-docker_client = DockerClient(
-    base_url=environment.get_docker_context(),
-)
+
+docker_client = DockerClient(base_url=docker_context)
+telegram_client = TelegramClient(BOT_NAME, telegram_api_id, telegram_api_hash)
 
 
-async def log_info(event: events.NewMessage.Event, message: str):
+async def _log(event: events.NewMessage.Event, message: str):
     print(message)
     await telegram_client.send_message(
         entity=event.message.chat_id,
@@ -47,24 +54,24 @@ async def _start_command(event: events.NewMessage.Event):
 
     try:
         if not Web3.is_address(token):
-            await log_info(event, "Invalid token address!")
+            await _log(event, "Invalid token address!")
 
         containers = docker_client.containers.list(all=True)
 
         if any(token in container.name for container in containers):
-            await log_info(event, f"Already trading this token {token}.")
+            await _log(event, f"Already trading this token {token}.")
             return
 
-        docker_environment = os.environ.copy()
-        docker_environment["TOKEN_ADDRESS"] = token
-        docker_environment["WEBSOCKET_URI"] = "ws://host.docker.internal:8765"
+        envron = os.environ.copy()
+        envron["TOKEN_ADDRESS"] = token
+        envron["WEBSOCKET_URI"] = "ws://host.docker.internal:8765"
 
-        await log_info(event, f"Starting container {token}...")
+        await _log(event, f"Starting container {token}...")
 
         container = docker_client.containers.run(
             docker_image_tag,
             name=token,
-            environment=docker_environment,
+            environment=envron,
             detach=True,
             stdout=True,
             stderr=True,
@@ -73,9 +80,9 @@ async def _start_command(event: events.NewMessage.Event):
         if not container:
             raise Exception(f"Failed to start container {token}")
 
-        await log_info(event, f"Container {token} started!")
+        await _log(event, f"Container {token} started!")
     except Exception as error:
-        log_info(event, f"Failed to start trading with token {token}: {error}")
+        _log(event, f"Failed to start trading with token {token}: {error}")
 
 
 async def _stop_command(event: events.NewMessage.Event):
@@ -83,53 +90,53 @@ async def _stop_command(event: events.NewMessage.Event):
 
     try:
         if not Web3.is_address(token):
-            log_info(event, "Invalid token address!")
+            _log(event, "Invalid token address!")
             return
 
         containers = docker_client.containers.list(all=True)
 
         if not any(token in container.name for container in containers):
-            await log_info(event, f"Trading with token {token} is not running.")
+            await _log(event, f"Trading with token {token} is not running.")
 
         for container in containers:
             if token in container.name:
-                await log_info(event, f"Deleting container {token}...")
+                await _log(event, f"Deleting container {token}...")
 
                 container.stop()
                 container.remove()
 
-                await log_info(event, f"Trading with token {token} deleted!")
+                await _log(event, f"Trading with token {token} deleted!")
 
     except Exception as error:
-        await log_info(event, f"Failed to stop trading with token {token}: {error}")
+        await _log(event, f"Failed to stop trading with token {token}: {error}")
 
 
 async def _stop_all_command(event: events.NewMessage.Event):
     containers = docker_client.containers.list(all=True)
 
     if not any("0x" in container.name for container in containers):
-        await log_info(event, "No containers are running!")
+        await _log(event, "No containers are running!")
         return
 
     for container in containers:
         if "0x" in container.name:
-            await log_info(event, f"Deleting container {container.name}...")
+            await _log(event, f"Deleting container {container.name}...")
 
             container.stop()
             container.remove()
 
-            await log_info(event, f"Container {container.name} is deleted!")
+            await _log(event, f"Container {container.name} is deleted!")
 
 
 async def _status_command(event: events.NewMessage.Event):
     containers = docker_client.containers.list(all=True)
 
     if not containers:
-        await log_info(event, "No containers are running!")
+        await _log(event, "No containers are running!")
         return
 
     for container in containers:
-        await log_info(event, f"Container {container.name} is running!")
+        await _log(event, f"Container {container.name} is running!")
 
 
 async def _new_message_handler(event: events.NewMessage.Event):
@@ -146,7 +153,7 @@ async def _new_message_handler(event: events.NewMessage.Event):
             await _status_command(event)
 
     except Exception as error:
-        await log_info(event, f"Failed to process command: {error}")
+        await _log(event, f"Failed to process command: {error}")
 
 
 async def _handle_websocket_connection(
@@ -193,9 +200,7 @@ async def _limoncello():
 
         if not telegram_client.is_connected():
             raise ConnectionError(
-                "Failed to connect to Telegram with API_ID={}".format(
-                    environment.get_telegram_api_id()
-                )
+                "Failed to connect to Telegram with API_ID={}".format(telegram_api_id)
             )
 
         if len(docker_client.images.list(name=docker_image_tag)) > 0:
@@ -235,8 +240,15 @@ async def _limoncello():
         websocket_logger = logging.getLogger("websockets")
         websocket_logger.disabled = True
 
+        websocket_uri_informations = (
+            os.environ.get("WEBSOCKET_URI").split("://")[1].split(":")
+        )
+
         websocket_server = websockets.serve(
-            _handle_websocket_connection, "0.0.0.0", 8765, logger=websocket_logger
+            _handle_websocket_connection,
+            websocket_uri_informations[0],
+            websocket_uri_informations[1],
+            logger=websocket_logger,
         )
 
         async with websocket_server:

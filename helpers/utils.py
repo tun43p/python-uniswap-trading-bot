@@ -2,7 +2,7 @@ import requests
 
 from web3 import Web3
 
-from helpers import environment, logger
+from helpers import constants, environment, logger
 
 
 def get_client():
@@ -40,7 +40,7 @@ def get_router(client: Web3):
     Get the Uniswap V2 Router contract
     """
     try:
-        address = environment.get_uniswap_v2_router_contract_address()
+        address = constants.UNISWAP_V2_ROUTER_CONTRACT_ADDRESS
         return client.eth.contract(address=address, abi=get_abi(address))
     except Exception as error:
         logger.fatal(f"Failed to get router for contract {address}: {error}")
@@ -52,7 +52,7 @@ def get_factory(client: Web3):
     """
 
     try:
-        address = environment.get_uniswap_v2_factory_contract_address()
+        address = constants.UNISWAP_V2_FACTORY_CONTRACT_ADDRESS
         return client.eth.contract(address=address, abi=get_abi(address))
     except Exception as error:
         logger.fatal(f"Failed to get factory for contract {address}: {error}")
@@ -79,7 +79,7 @@ def get_token_price_in_wei(client: Web3, token_address: str):
         router = get_router(client)
 
         path = [
-            client.to_checksum_address(environment.get_eth_contract_address()),
+            client.to_checksum_address(constants.WETH_CONTRACT_ADDRESS),
             client.to_checksum_address(token_address),
         ]
 
@@ -100,7 +100,7 @@ def get_pair_address(client: Web3, token_address: str):
         factory = get_factory(client)
 
         return factory.functions.getPair(
-            client.to_checksum_address(environment.get_eth_contract_address()),
+            client.to_checksum_address(constants.WETH_CONTRACT_ADDRESS),
             client.to_checksum_address(token_address),
         ).call()
     except Exception as error:

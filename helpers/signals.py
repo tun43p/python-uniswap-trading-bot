@@ -1,6 +1,6 @@
 from web3 import Web3
 
-from helpers import environment, logger, utils
+from helpers import constants, environment, logger, utils
 
 
 def buy(
@@ -30,7 +30,7 @@ def buy(
         router = utils.get_router(client)
 
         eth_to_token_path = [
-            client.to_checksum_address(environment.get_eth_contract_address()),
+            client.to_checksum_address(constants.WETH_CONTRACT_ADDRESS),
             client.to_checksum_address(token_address),
         ]
 
@@ -93,7 +93,7 @@ def sell(
 
         token_to_eth_path = [
             client.to_checksum_address(token_address),
-            client.to_checksum_address(environment.get_eth_contract_address()),
+            client.to_checksum_address(constants.WETH_CONTRACT_ADDRESS),
         ]
 
         amount_before_slippage = router.functions.getAmountsOut(
@@ -143,9 +143,7 @@ def _approve(client: Web3, token_address: str, amount_in_wei: int):
         )
 
         txn = token_contract.functions.approve(
-            client.to_checksum_address(
-                environment.get_uniswap_v2_router_contract_address()
-            ),
+            client.to_checksum_address(constants.UNISWAP_V2_ROUTER_CONTRACT_ADDRESS),
             amount_in_wei,
         ).build_transaction(
             {

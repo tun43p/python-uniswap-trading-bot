@@ -33,6 +33,9 @@ async def _send_ws_message(message: str, logging_level: int = logging.INFO) -> N
     from helpers import environment
 
     try:
+        if not environment.get_websocket_uri():
+            raise ValueError("WEBSOCKET_URI is not set")
+
         async with websockets.connect(environment.get_websocket_uri()) as websocket:
             await websocket.send(_format_message(message, logging_level))
     except Exception as error:
