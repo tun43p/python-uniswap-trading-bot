@@ -1,7 +1,7 @@
 import dotenv
 
 from helpers import environment, utils
-from tests import env_test, utils_test
+from tests import utils_test
 
 dotenv.load_dotenv(dotenv_path=".env")
 
@@ -14,12 +14,6 @@ assert client.is_connected(), "Failed to connect to client with RPC_URL={}".form
 )
 
 print("Connected to client")
-print("Running tests")
-print("Running env tests")
-
-env_test.run_all_tests()
-
-print("Finished env tests")
 print("Running utils tests")
 
 utils_test.run_all_tests(client=client, token_address=environment.get_token_address())

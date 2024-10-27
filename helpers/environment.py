@@ -2,37 +2,21 @@ import os
 
 from web3 import Web3
 
+from helpers import logger
 
-def _get_env_variable(name: str) -> str:
+
+def _get_env_variable(name: str, not_required: bool = False) -> str:
     try:
         value = os.environ.get(name)
 
-        if value is None:
+        if not_required:
+            return value
+        elif value is None:
             raise ValueError(f"{name} is not set")
 
         return value
     except Exception as error:
-        raise Exception(f"Failed to get {name} variable") from error
-
-
-def check_env_variables() -> bool:
-    """
-    Check if all the required environment variables are set
-    """
-
-    try:
-        get_token_address()
-        get_private_key()
-        get_rpc_url()
-        get_etherscan_api_key()
-        get_telegram_api_id()
-        get_telegram_api_hash()
-        get_telegram_bot_token()
-        get_telegram_channel_id()
-
-        return True
-    except Exception:
-        return False
+        logger.fatal(f"Failed to get {name} variable: {error}")
 
 
 def get_token_address() -> str:
@@ -56,7 +40,10 @@ def get_public_key() -> str:
     Get the public key of the wallet
     """
 
-    return Web3().eth.account.from_key(get_private_key()).address
+    try:
+        return Web3().eth.account.from_key(get_private_key()).address
+    except Exception as error:
+        logger.fatal(f"Failed to get PUBLIC_KEY variable: {error}")
 
 
 def get_rpc_url() -> str:
@@ -116,14 +103,6 @@ def get_telegram_api_hash() -> str:
     return _get_env_variable("TELEGRAM_API_HASH")
 
 
-def get_telegram_bot_token() -> str:
-    """
-    Get the Telegram bot token
-    """
-
-    return _get_env_variable("TELEGRAM_BOT_TOKEN")
-
-
 def get_telegram_channel_id() -> str:
     """
     Get the Telegram channel ID
@@ -132,9 +111,18 @@ def get_telegram_channel_id() -> str:
     return _get_env_variable("TELEGRAM_CHANNEL_ID")
 
 
-def get_docker_client():
+def get_docker_context():
     """
-    Get the Docker client
+    Get the Docker context
     """
 
-    return _get_env_variable("DOCKER_CLIENT")
+    docker_context = _get_env_variable("DOCKER_CONTEXT", not_required=True)
+    return docker_context if docker_context else "unix://var/run/docker.sock"
+
+
+def get_websocket_uri():
+    """
+    Get the WebSocket URI
+    """
+
+    return _get_env_variable("WEBSOCKET_URI", not_required=True)

@@ -1,16 +1,10 @@
 import dotenv
 import time
 
-from helpers import environment, log, utils
+from helpers import environment, logger, utils
 from jobs.default_job import default_job
 
 dotenv.load_dotenv(dotenv_path=".env")
-
-
-is_env_variables_set = environment.check_env_variables()
-
-if not is_env_variables_set:
-    raise Exception("Failed to set environment variables")
 
 
 def main():
@@ -29,7 +23,7 @@ def main():
 
     initial_price_in_wei = utils.get_token_price_in_wei(client, token_address)
 
-    log.log_info(f"Running default_job for {token_address}")
+    logger.info("Running default_job")
 
     # TODO: DELETE THIS !! THIS BUY AT START
     # txn_hash = signals.buy(client, token_address, client.to_wei(0.002, "ether"))
@@ -61,8 +55,7 @@ def main():
 
             liquidity = utils.get_token_liquidity(client, token_address)
 
-            log.log_txn(
-                token_address,
+            logger.txn(
                 transaction_type,
                 current_price_in_eth,
                 price_change_percent,
@@ -71,7 +64,7 @@ def main():
             )
 
         except Exception as error:
-            log.log_error(error)
+            logger.fatal(error)
             break
 
     time.sleep(60)

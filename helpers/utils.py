@@ -2,7 +2,7 @@ import requests
 
 from web3 import Web3
 
-from helpers import environment
+from helpers import environment, logger
 
 
 def get_client():
@@ -10,7 +10,10 @@ def get_client():
     Get the Web3 client
     """
 
-    return Web3(Web3.HTTPProvider(environment.get_rpc_url()))
+    try:
+        return Web3(Web3.HTTPProvider(environment.get_rpc_url()))
+    except Exception as error:
+        logger.fatal(f"Failed to get client: {error}")
 
 
 def get_abi(address: str):
@@ -29,7 +32,7 @@ def get_abi(address: str):
             },
         ).json()["result"]
     except Exception as error:
-        raise Exception(f"Failed to get ABI for contract {address}") from error
+        logger.fatal(f"Failed to get ABI for contract {address}: {error}")
 
 
 def get_router(client: Web3):
@@ -40,7 +43,7 @@ def get_router(client: Web3):
         address = environment.get_uniswap_v2_router_contract_address()
         return client.eth.contract(address=address, abi=get_abi(address))
     except Exception as error:
-        raise Exception(f"Failed to get router for contract {address}") from error
+        logger.fatal(f"Failed to get router for contract {address}: {error}")
 
 
 def get_factory(client: Web3):
@@ -52,7 +55,7 @@ def get_factory(client: Web3):
         address = environment.get_uniswap_v2_factory_contract_address()
         return client.eth.contract(address=address, abi=get_abi(address))
     except Exception as error:
-        raise Exception(f"Failed to get factory for contract {address}") from error
+        logger.fatal(f"Failed to get factory for contract {address}: {error}")
 
 
 def get_eth_price_in_usd():
@@ -65,7 +68,7 @@ def get_eth_price_in_usd():
             params={"ids": "ethereum", "vs_currencies": "usd"},
         ).json()["ethereum"]["usd"]
     except Exception as error:
-        raise Exception("Failed to get ETH price") from error
+        logger.fatal(f"Failed to get ETH price: {error}")
 
 
 def get_token_price_in_wei(client: Web3, token_address: str):
@@ -85,7 +88,7 @@ def get_token_price_in_wei(client: Web3, token_address: str):
             path,
         ).call()[1]
     except Exception as error:
-        raise Exception("Token is not listed on Uniswap") from error
+        logger.fatal(f"Failed to get token price: {error}")
 
 
 def get_pair_address(client: Web3, token_address: str):
@@ -101,7 +104,7 @@ def get_pair_address(client: Web3, token_address: str):
             client.to_checksum_address(token_address),
         ).call()
     except Exception as error:
-        raise Exception("Pair does not exist") from error
+        logger.fatal(f"Failed to get pair address: {error}")
 
 
 def get_token_liquidity(client: Web3, token_address: str):
@@ -118,7 +121,7 @@ def get_token_liquidity(client: Web3, token_address: str):
 
         return pair.functions.getReserves().call()[0]
     except Exception as error:
-        raise Exception("Token is not listed on Uniswap") from error
+        logger.fatal(f"Failed to get token liquidity: {error}")
 
 
 def get_token_balance(client: Web3, token_address: str):
@@ -138,7 +141,7 @@ def get_token_balance(client: Web3, token_address: str):
             .call()
         )
     except Exception as error:
-        raise Exception("Failed to get token balance") from error
+        logger.fatal(f"Failed to get token balance: {error}")
 
 
 def get_gas_price_in_wei(client: Web3):
@@ -150,7 +153,7 @@ def get_gas_price_in_wei(client: Web3):
         # TODO: Check if this is correct or not
         return client.eth.gas_price
     except Exception as error:
-        raise Exception("Failed to get gas price") from error
+        logger.fatal(f"Failed to get gas price: {error}")
 
 
 def get_gas_price_for_transaction_in_wei(
@@ -172,4 +175,4 @@ def get_gas_price_for_transaction_in_wei(
         # TODO: Check if this is correct or not
         return int(estimate_gas * 2)
     except Exception as error:
-        raise Exception("Failed to get gas price for transaction") from error
+        logger.fatal(f"Failed to get gas price for transaction: {error}")

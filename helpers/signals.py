@@ -1,6 +1,6 @@
 from web3 import Web3
 
-from helpers import environment, log, utils
+from helpers import environment, logger, utils
 
 
 def buy(
@@ -65,8 +65,7 @@ def buy(
 
         return _sign(client, txn)
     except Exception as error:
-        log.log_error(error)
-        raise Exception("Buy failed") from error
+        logger.fatal(f"Buy failed: {error}")
 
 
 def sell(
@@ -127,8 +126,7 @@ def sell(
 
         return _sign(client, txn)
     except Exception as error:
-        log.log_error(error)
-        raise Exception("Sell failed") from error
+        logger.fatal(error)
 
 
 def _approve(client: Web3, token_address: str, amount_in_wei: int):
@@ -162,8 +160,7 @@ def _approve(client: Web3, token_address: str, amount_in_wei: int):
 
         return _sign(client, txn, is_approval=True)
     except Exception as error:
-        log.log_error(error)
-        raise Exception("Approval failed") from error
+        logger.fatal(f"Approval failed: {error}")
 
 
 def _sign(client: Web3, txn: dict, is_approval: bool = False):
@@ -182,7 +179,4 @@ def _sign(client: Web3, txn: dict, is_approval: bool = False):
 
         return txn_hash
     except Exception as error:
-        log.log_error(error)
-        raise Exception(
-            f"{'Approval' if is_approval else 'Transaction'} failed"
-        ) from error
+        logger.fatal(f"{'Approval' if is_approval else 'Transaction'} failed: {error}")

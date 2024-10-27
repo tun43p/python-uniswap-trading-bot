@@ -9,4 +9,6 @@ COPY ./helpers ./helpers
 COPY ./jobs ./jobs
 COPY ./main.py ./
 
+EXPOSE 8765
+
 CMD [ "python", "./main.py" ]

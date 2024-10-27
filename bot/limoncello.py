@@ -1,29 +1,36 @@
+import logging
 import os
+import colorama
 from docker import DockerClient
 import dotenv
 from telethon import events, TelegramClient
 from web3 import Web3
+import websockets
 
 from helpers import environment
 
+# This is a global variable, which is not a good practice, but it is used for
+# simplicity. It is used to store the connected clients to the WebSocket server.
+# The key is the token address and the value is the WebSocket client.
+connected_clients = {}
 
-dotenv.load_dotenv(dotenv_path=".env")
+if os.path.exists(".env"):
+    dotenv.load_dotenv(dotenv_path=".env")
 
-is_env_variables_set = environment.check_env_variables()
+BOT_NAME = "limoncello"
 
-if not is_env_variables_set:
-    raise Exception("Failed to set environment variables")
+os.environ["TOKEN_ADDRESS"] = ""
+os.environ["WEBSOCKET_URL"] = "ws://0.0.0.0:8765"
 
 telegram_client = TelegramClient(
-    "limencello",
+    BOT_NAME,
     environment.get_telegram_api_id(),
     environment.get_telegram_api_hash(),
 )
 
-docker_image_tag = "tun43p/limoncello"
-docker_client_url = os.environ.get("DOCKER_CLIENT")
+docker_image_tag = f"tun43p/{BOT_NAME}"
 docker_client = DockerClient(
-    base_url=docker_client_url if docker_client_url else "unix://var/run/docker.sock"
+    base_url=environment.get_docker_context(),
 )
 
 
@@ -48,15 +55,16 @@ async def _start_command(event: events.NewMessage.Event):
             await log_info(event, f"Already trading this token {token}.")
             return
 
-        environment = os.environ.copy()
-        environment["TOKEN_ADDRESS"] = token
+        docker_environment = os.environ.copy()
+        docker_environment["TOKEN_ADDRESS"] = token
+        docker_environment["WEBSOCKET_URI"] = "ws://host.docker.internal:8765"
 
         await log_info(event, f"Starting container {token}...")
 
         container = docker_client.containers.run(
             docker_image_tag,
             name=token,
-            environment=environment,
+            environment=docker_environment,
             detach=True,
             stdout=True,
             stderr=True,
@@ -85,16 +93,32 @@ async def _stop_command(event: events.NewMessage.Event):
 
         for container in containers:
             if token in container.name:
-                await log_info(event, f"Stopping container {token}...")
-                container.stop()
+                await log_info(event, f"Deleting container {token}...")
 
-                await log_info(event, f"Removing container {token}...")
+                container.stop()
                 container.remove()
 
-        await log_info(event, f"Trading with token {token} deleted!")
+                await log_info(event, f"Trading with token {token} deleted!")
 
     except Exception as error:
         await log_info(event, f"Failed to stop trading with token {token}: {error}")
+
+
+async def _stop_all_command(event: events.NewMessage.Event):
+    containers = docker_client.containers.list(all=True)
+
+    if not any("0x" in container.name for container in containers):
+        await log_info(event, "No containers are running!")
+        return
+
+    for container in containers:
+        if "0x" in container.name:
+            await log_info(event, f"Deleting container {container.name}...")
+
+            container.stop()
+            container.remove()
+
+            await log_info(event, f"Container {container.name} is deleted!")
 
 
 async def _status_command(event: events.NewMessage.Event):
@@ -116,10 +140,51 @@ async def _new_message_handler(event: events.NewMessage.Event):
             await _start_command(event)
         elif message.startswith("/stop") and "0x" in message:
             await _stop_command(event)
+        elif message.startswith("/stop-all"):
+            await _stop_all_command(event)
         elif message.startswith("/status"):
             await _status_command(event)
+
     except Exception as error:
         await log_info(event, f"Failed to process command: {error}")
+
+
+async def _handle_websocket_connection(
+    websocket: websockets.WebSocketServerProtocol,
+    path: str,
+):
+    global connected_clients
+    connected_clients[path] = websocket
+
+    try:
+        async for message in websocket:
+            data = message.split("::")
+            _, token, level, message = data
+
+            log_message = f"{token} {message}"
+
+            if level == "ERROR" or level == "CRITICAL" or level == "FATAL":
+                log_message = (
+                    f"{colorama.Fore.RED}{log_message}{colorama.Style.RESET_ALL}"
+                )
+            elif level == "WARNING":
+                log_message = (
+                    f"{colorama.Fore.YELLOW}{log_message}{colorama.Style.RESET_ALL}"
+                )
+            elif level == "DEBUG":
+                log_message = (
+                    f"{colorama.Fore.BLUE}{log_message}{colorama.Style.RESET_ALL}"
+                )
+
+            print(log_message)
+
+            await websocket.send(log_message)
+    except websockets.exceptions.ConnectionClosedOK:
+        pass
+    except Exception as error:
+        print(f"Error in WebSocket connection: {error}")
+    finally:
+        connected_clients.pop(path, None)
 
 
 async def _limoncello():
@@ -160,7 +225,6 @@ async def _limoncello():
         )
 
         print("Docker image built!")
-        print("Limoncello started!")
 
         # TODO: Listen only for SMART ETH SIGNALS
         telegram_client.add_event_handler(
@@ -168,7 +232,16 @@ async def _limoncello():
             events.NewMessage(),
         )
 
-        await telegram_client.run_until_disconnected()
+        websocket_logger = logging.getLogger("websockets")
+        websocket_logger.disabled = True
+
+        websocket_server = websockets.serve(
+            _handle_websocket_connection, "0.0.0.0", 8765, logger=websocket_logger
+        )
+
+        async with websocket_server:
+            print("Limoncello started!")
+            await telegram_client.run_until_disconnected()
     except Exception as error:
         print(f"Failed to start Limoncello: {error}")
 
