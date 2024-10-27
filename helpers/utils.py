@@ -20,7 +20,7 @@ def get_abi(address: str):
 
     try:
         return requests.get(
-            f"https://api.etherscan.io/api",
+            "https://api.etherscan.io/api",
             params={
                 "module": "contract",
                 "action": "getabi",
@@ -145,6 +145,7 @@ def get_gas_price_in_wei(client: Web3):
     """
 
     try:
+        # TODO: Check if this is correct or not
         return client.eth.gas_price
     except Exception as error:
         raise Exception("Failed to get gas price") from error
@@ -154,16 +155,19 @@ def get_gas_price_for_transaction_in_wei(
     client: Web3, token_address: str, amount_in_wei: int
 ):
     """
-    Get the gas estimation for a transaction
+    Get the gas estimation for a transaction * 2 for safety
     """
 
     try:
-        return client.eth.estimate_gas(
+        estimate_gas = client.eth.estimate_gas(
             {
                 "from": client.to_checksum_address(env.get_public_key()),
                 "to": client.to_checksum_address(token_address),
                 "value": amount_in_wei,
             }
         )
+
+        # TODO: Check if this is correct or not
+        return int(estimate_gas * 2)
     except Exception as error:
         raise Exception("Failed to get gas price for transaction") from error

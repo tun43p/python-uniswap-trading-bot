@@ -20,7 +20,7 @@ def default_job(
 
     try:
         if current_price < initial_price_in_wei * 0.9:
-            txn_hash = signals.buy(client, token_address, 1)
+            txn_hash = signals.buy(client, token_address, client.to_wei(0.002, "ether"))
             return (models.TransactionType.BUY, current_price, token_balance, txn_hash)
 
         # -30% = -20% + -10% from the previous condition

@@ -1,4 +1,3 @@
-from asyncio import sleep
 from web3 import Web3
 
 from helpers import env, utils

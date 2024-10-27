@@ -1,13 +1,13 @@
 from web3 import Web3
 
-from helpers import env, utils
+from helpers import env, log, utils
 
 
 def buy(
     client: Web3,
     token_address: str,
     amount_in_wei: int,
-    slippage_percent: int | float = 0.1,
+    slippage_percent: int | float = 0.05,
 ):
     """
     Buy a token from Uniswap V2
@@ -46,27 +46,26 @@ def buy(
         txn_count = client.eth.get_transaction_count(public_key)
         time_limit = client.eth.get_block("latest")["timestamp"] + 60 * 10  # 10 minutes
 
-        _approve(client, token_address, amount_in_wei)
-
         txn = router.functions.swapExactETHForTokens(
-            amount_before_slippage,
+            amount_after_slippage,
             eth_to_token_path,
             public_key,
             time_limit,
         ).build_transaction(
             {
                 "from": public_key,
-                "value": amount_after_slippage,
+                "value": amount_in_wei,
                 "gas": utils.get_gas_price_for_transaction_in_wei(
                     client, token_address, amount_in_wei
                 ),
-                "gasPrice": utils.get_gas_price_in_wei(),
+                "gasPrice": utils.get_gas_price_in_wei(client),
                 "nonce": txn_count,
             }
         )
 
         return _sign(client, txn)
     except Exception as error:
+        log.log_error(error)
         raise Exception("Buy failed") from error
 
 
@@ -74,7 +73,7 @@ def sell(
     client: Web3,
     token_address: str,
     amount_in_wei: int,
-    slippage_percent: int | float = 0.1,
+    slippage_percent: int | float = 0.05,
 ):
     """
     Sell a token on Uniswap V2
@@ -121,13 +120,14 @@ def sell(
                 "gas": utils.get_gas_price_for_transaction_in_wei(
                     client, token_address, amount_in_wei
                 ),
-                "gasPrice": utils.get_gas_price_in_wei(),
+                "gasPrice": utils.get_gas_price_in_wei(client),
                 "nonce": client.eth.get_transaction_count(public_key),
             }
         )
 
         return _sign(client, txn)
     except Exception as error:
+        log.log_error(error)
         raise Exception("Sell failed") from error
 
 
@@ -160,6 +160,7 @@ def _approve(client: Web3, token_address: str, amount_in_wei: int):
 
         return _sign(client, txn, is_approval=True)
     except Exception as error:
+        log.log_error(error)
         raise Exception("Approval failed") from error
 
 
@@ -177,6 +178,7 @@ def _sign(client: Web3, txn: dict, is_approval: bool = False):
 
         return txn_hash
     except Exception as error:
+        log.log_error(error)
         raise Exception(
             f"{'Approval' if is_approval else 'Transaction'} failed"
         ) from error

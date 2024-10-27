@@ -1,13 +1,14 @@
 import os
 import dotenv
 
+from helpers import env, env_test, utils, utils_test
+
 dotenv.load_dotenv(dotenv_path=".env")
 
 test_token_address = os.environ.get("TEST_TOKEN_ADDRESS")
 if test_token_address is None:
     raise ValueError("TEST_TOKEN_ADDRESS is not set")
 
-from helpers import env, env_test, utils, utils_test
 
 print("Env loaded")
 print("Connecting to client")
