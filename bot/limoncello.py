@@ -14,25 +14,28 @@ is_env_variables_set = env.check_env_variables()
 if not is_env_variables_set:
     raise Exception("Failed to set environment variables")
 
-telegram = TelegramClient(
+telegram_client = TelegramClient(
     "limencello",
     env.get_telegram_api_id(),
     env.get_telegram_api_hash(),
 )
 
-# TODO: Pass to env variables
-docker_client = DockerClient(base_url="unix:///Users/tun43p/.docker/run/docker.sock")
+docker_image_tag = "tun43p/limoncello"
+docker_client_url = os.environ.get("DOCKER_CLIENT")
+docker_client = DockerClient(
+    base_url=docker_client_url if docker_client_url else "unix://var/run/docker.sock"
+)
 
 
 async def log_info(event: events.NewMessage.Event, message: str):
     print(message)
-    await telegram.send_message(
+    await telegram_client.send_message(
         entity=event.message.chat_id,
         message=message,
     )
 
 
-async def start_process(event: events.NewMessage.Event):
+async def _start_command(event: events.NewMessage.Event):
     token = f"0x{event.message.message.split('0x')[1]}"
 
     try:
@@ -45,25 +48,13 @@ async def start_process(event: events.NewMessage.Event):
             await log_info(event, f"Already trading this token {token}.")
             return
 
-        tag = "tun43p/limoncello"
-
-        if len(docker_client.images.list(name=tag)) == 0:
-            await log_info(event, f"Building image {tag}...")
-
-            docker_client.images.build(
-                path=".",
-                tag=tag,
-                nocache=True,
-                rm=True,
-            )
-
         environment = os.environ.copy()
         environment["TOKEN_ADDRESS"] = token
 
         await log_info(event, f"Starting container {token}...")
 
         container = docker_client.containers.run(
-            tag,
+            docker_image_tag,
             name=token,
             environment=environment,
             detach=True,
@@ -79,7 +70,7 @@ async def start_process(event: events.NewMessage.Event):
         log_info(event, f"Failed to start trading with token {token}: {error}")
 
 
-async def stop_process(event: events.NewMessage.Event):
+async def _stop_command(event: events.NewMessage.Event):
     token = f"0x{event.message.message.split('0x')[1]}"
 
     try:
@@ -106,7 +97,7 @@ async def stop_process(event: events.NewMessage.Event):
         await log_info(event, f"Failed to stop trading with token {token}: {error}")
 
 
-async def get_status(event: events.NewMessage.Event):
+async def _status_command(event: events.NewMessage.Event):
     containers = docker_client.containers.list(all=True)
 
     if not containers:
@@ -117,36 +108,69 @@ async def get_status(event: events.NewMessage.Event):
         await log_info(event, f"Container {container.name} is running!")
 
 
-async def handler(event: events.NewMessage.Event):
+async def _new_message_handler(event: events.NewMessage.Event):
     message = event.message.message
 
     try:
         if message.startswith("/trade") and "0x" in message:
-            await start_process(event)
+            await _start_command(event)
         elif message.startswith("/stop") and "0x" in message:
-            await stop_process(event)
+            await _stop_command(event)
         elif message.startswith("/status"):
-            await get_status(event)
+            await _status_command(event)
     except Exception as error:
         await log_info(event, f"Failed to process command: {error}")
 
 
-async def limoncello():
-    await telegram.start()
+async def _limoncello():
+    try:
+        await telegram_client.start()
 
-    if not telegram.is_connected():
-        raise ConnectionError(
-            "Failed to connect to Telegram with API_ID={}".format(
-                env.get_telegram_api_id()
+        if not telegram_client.is_connected():
+            raise ConnectionError(
+                "Failed to connect to Telegram with API_ID={}".format(
+                    env.get_telegram_api_id()
+                )
             )
+
+        if len(docker_client.images.list(name=docker_image_tag)) > 0:
+            print("Removing existing Docker containers...")
+
+            for container in docker_client.containers.list(all=True):
+                if docker_image_tag not in container.image.tags:
+                    container.stop()
+                    container.remove()
+
+                    print(f"Container {container.name} removed!")
+
+            print("Removing existing Docker image...")
+
+            for image in docker_client.images.list(name=docker_image_tag):
+                docker_client.images.remove(image.id, force=True)
+
+                print(f"Image {image.id} removed!")
+
+        print("Building Docker image...")
+
+        docker_client.images.build(
+            path=".",
+            tag=docker_image_tag,
+            nocache=True,
+            rm=True,
         )
 
-    print("Limoncello started!")
+        print("Docker image built!")
+        print("Limoncello started!")
 
-    # TODO: Listen only for SMART ETH SIGNALS
-    telegram.add_event_handler(handler, events.NewMessage())
+        # TODO: Listen only for SMART ETH SIGNALS
+        telegram_client.add_event_handler(
+            _new_message_handler,
+            events.NewMessage(),
+        )
 
-    await telegram.run_until_disconnected()
+        await telegram_client.run_until_disconnected()
+    except Exception as error:
+        print(f"Failed to start Limoncello: {error}")
 
 
-telegram.loop.run_until_complete(limoncello())
+telegram_client.loop.run_until_complete(_limoncello())

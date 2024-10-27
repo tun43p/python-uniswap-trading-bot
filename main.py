@@ -1,7 +1,7 @@
 import dotenv
 import time
 
-from helpers import env, log, models, signals, utils
+from helpers import env, log, utils
 from jobs.default_job import default_job
 
 dotenv.load_dotenv(dotenv_path=".env")
@@ -30,20 +30,20 @@ def main():
     log.log_info(f"Running default_job for {token_address}")
 
     # TODO: DELETE THIS !! THIS BUY AT START
-    txn_hash = signals.buy(client, token_address, client.to_wei(0.002, "ether"))
-    current_price_in_eth = client.from_wei(initial_price_in_wei, "ether")
-    price_change_percent = (
-        (current_price_in_eth - client.from_wei(initial_price_in_wei, "ether"))
-        / client.from_wei(initial_price_in_wei, "ether")
-    ) * 100
-    log.log_txn(
-        token_address,
-        models.TransactionType.BUY,
-        initial_price_in_wei,
-        current_price_in_eth,
-        price_change_percent,
-        txn_hash,
-    )
+    # txn_hash = signals.buy(client, token_address, client.to_wei(0.002, "ether"))
+    # current_price_in_eth = client.from_wei(initial_price_in_wei, "ether")
+    # price_change_percent = (
+    #     (current_price_in_eth - client.from_wei(initial_price_in_wei, "ether"))
+    #     / client.from_wei(initial_price_in_wei, "ether")
+    # ) * 100
+    # log.log_txn(
+    #     token_address,
+    #     models.TransactionType.BUY,
+    #     initial_price_in_wei,
+    #     current_price_in_eth,
+    #     price_change_percent,
+    #     txn_hash,
+    # )
 
     while True:
         try:

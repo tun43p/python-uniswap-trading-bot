@@ -130,3 +130,11 @@ def get_telegram_channel_id() -> str:
     """
 
     return _get_env_variable("TELEGRAM_CHANNEL_ID")
+
+
+def get_docker_client():
+    """
+    Get the Docker client
+    """
+
+    return _get_env_variable("DOCKER_CLIENT")
