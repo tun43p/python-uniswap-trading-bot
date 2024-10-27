@@ -1,13 +1,13 @@
 import dotenv
 import time
 
-from helpers import env, log, utils
+from helpers import environment, log, utils
 from jobs.default_job import default_job
 
 dotenv.load_dotenv(dotenv_path=".env")
 
 
-is_env_variables_set = env.check_env_variables()
+is_env_variables_set = environment.check_env_variables()
 
 if not is_env_variables_set:
     raise Exception("Failed to set environment variables")
@@ -17,10 +17,12 @@ def main():
     client = utils.get_client()
     if not client.is_connected():
         raise ConnectionError(
-            "Failed to connect to client with RPC_URL={}".format(env.get_rpc_url())
+            "Failed to connect to client with RPC_URL={}".format(
+                environment.get_rpc_url()
+            )
         )
 
-    token_address = env.get_token_address()
+    token_address = environment.get_token_address()
 
     if not client.is_address(token_address):
         raise ValueError(f"Invalid token address: {token_address}")

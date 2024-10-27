@@ -2,7 +2,7 @@ import requests
 
 from web3 import Web3
 
-from helpers import env
+from helpers import environment
 
 
 def get_client():
@@ -10,7 +10,7 @@ def get_client():
     Get the Web3 client
     """
 
-    return Web3(Web3.HTTPProvider(env.get_rpc_url()))
+    return Web3(Web3.HTTPProvider(environment.get_rpc_url()))
 
 
 def get_abi(address: str):
@@ -25,7 +25,7 @@ def get_abi(address: str):
                 "module": "contract",
                 "action": "getabi",
                 "address": address,
-                "apikey": env.get_etherscan_api_key(),
+                "apikey": environment.get_etherscan_api_key(),
             },
         ).json()["result"]
     except Exception as error:
@@ -37,7 +37,7 @@ def get_router(client: Web3):
     Get the Uniswap V2 Router contract
     """
     try:
-        address = env.get_uniswap_v2_router_contract_address()
+        address = environment.get_uniswap_v2_router_contract_address()
         return client.eth.contract(address=address, abi=get_abi(address))
     except Exception as error:
         raise Exception(f"Failed to get router for contract {address}") from error
@@ -49,7 +49,7 @@ def get_factory(client: Web3):
     """
 
     try:
-        address = env.get_uniswap_v2_factory_contract_address()
+        address = environment.get_uniswap_v2_factory_contract_address()
         return client.eth.contract(address=address, abi=get_abi(address))
     except Exception as error:
         raise Exception(f"Failed to get factory for contract {address}") from error
@@ -76,7 +76,7 @@ def get_token_price_in_wei(client: Web3, token_address: str):
         router = get_router(client)
 
         path = [
-            client.to_checksum_address(env.get_eth_contract_address()),
+            client.to_checksum_address(environment.get_eth_contract_address()),
             client.to_checksum_address(token_address),
         ]
 
@@ -97,7 +97,7 @@ def get_pair_address(client: Web3, token_address: str):
         factory = get_factory(client)
 
         return factory.functions.getPair(
-            client.to_checksum_address(env.get_eth_contract_address()),
+            client.to_checksum_address(environment.get_eth_contract_address()),
             client.to_checksum_address(token_address),
         ).call()
     except Exception as error:
@@ -132,7 +132,9 @@ def get_token_balance(client: Web3, token_address: str):
                 address=client.to_checksum_address(token_address),
                 abi=get_abi(token_address),
             )
-            .functions.balanceOf(client.to_checksum_address(env.get_public_key()))
+            .functions.balanceOf(
+                client.to_checksum_address(environment.get_public_key())
+            )
             .call()
         )
     except Exception as error:
@@ -161,7 +163,7 @@ def get_gas_price_for_transaction_in_wei(
     try:
         estimate_gas = client.eth.estimate_gas(
             {
-                "from": client.to_checksum_address(env.get_public_key()),
+                "from": client.to_checksum_address(environment.get_public_key()),
                 "to": client.to_checksum_address(token_address),
                 "value": amount_in_wei,
             }

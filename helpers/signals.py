@@ -1,6 +1,6 @@
 from web3 import Web3
 
-from helpers import env, log, utils
+from helpers import environment, log, utils
 
 
 def buy(
@@ -14,7 +14,7 @@ def buy(
     """
 
     try:
-        public_key = env.get_public_key()
+        public_key = environment.get_public_key()
 
         if amount_in_wei < 0:
             raise Exception("Invalid amount")
@@ -30,7 +30,7 @@ def buy(
         router = utils.get_router(client)
 
         eth_to_token_path = [
-            client.to_checksum_address(env.get_eth_contract_address()),
+            client.to_checksum_address(environment.get_eth_contract_address()),
             client.to_checksum_address(token_address),
         ]
 
@@ -80,7 +80,7 @@ def sell(
     """
 
     try:
-        public_key = env.get_public_key()
+        public_key = environment.get_public_key()
 
         token_balance = utils.get_token_balance(client, token_address)
         if token_balance < amount_in_wei:
@@ -94,7 +94,7 @@ def sell(
 
         token_to_eth_path = [
             client.to_checksum_address(token_address),
-            client.to_checksum_address(env.get_eth_contract_address()),
+            client.to_checksum_address(environment.get_eth_contract_address()),
         ]
 
         amount_before_slippage = router.functions.getAmountsOut(
@@ -137,7 +137,7 @@ def _approve(client: Web3, token_address: str, amount_in_wei: int):
     """
 
     try:
-        public_key = env.get_public_key()
+        public_key = environment.get_public_key()
 
         token_contract = client.eth.contract(
             address=token_address,
@@ -145,7 +145,9 @@ def _approve(client: Web3, token_address: str, amount_in_wei: int):
         )
 
         txn = token_contract.functions.approve(
-            client.to_checksum_address(env.get_uniswap_v2_router_contract_address()),
+            client.to_checksum_address(
+                environment.get_uniswap_v2_router_contract_address()
+            ),
             amount_in_wei,
         ).build_transaction(
             {
@@ -170,7 +172,9 @@ def _sign(client: Web3, txn: dict, is_approval: bool = False):
     """
 
     try:
-        signed_txn = client.eth.account.sign_transaction(txn, env.get_private_key())
+        signed_txn = client.eth.account.sign_transaction(
+            txn, environment.get_private_key()
+        )
         txn_hash = client.eth.send_raw_transaction(signed_txn.raw_transaction)
 
         if client.eth.wait_for_transaction_receipt(txn_hash)["status"] != 1:

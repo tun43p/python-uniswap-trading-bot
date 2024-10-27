@@ -1,20 +1,20 @@
 from web3 import Web3
 
-from helpers import env, utils
+from helpers import environment, utils
 
 
 def _get_abi_test(token_address: str):
     print("Test: get_abi")
 
-    eth_abi = utils.get_abi(env.get_eth_contract_address())
+    eth_abi = utils.get_abi(environment.get_eth_contract_address())
     print("eth_abi", eth_abi)
     assert eth_abi is not None, "ABI is None"
 
-    router_abi = utils.get_abi(env.get_uniswap_v2_router_contract_address())
+    router_abi = utils.get_abi(environment.get_uniswap_v2_router_contract_address())
     print("router_abi", router_abi)
     assert router_abi is not None, "ABI is None"
 
-    factory_abi = utils.get_abi(env.get_uniswap_v2_factory_contract_address())
+    factory_abi = utils.get_abi(environment.get_uniswap_v2_factory_contract_address())
     print("factory_abi", factory_abi)
     assert factory_abi is not None, "ABI is None"
 
@@ -49,7 +49,8 @@ def _get_token_price_in_wei(client: Web3, token_address: str):
 
 def _get_pair_address_test(client: Web3, token_address: str):
     pair_address = utils.get_pair_address(
-        client, token_address if token_address else env.get_weth_contract_address()
+        client,
+        token_address if token_address else environment.get_weth_contract_address(),
     )
 
     print("pair_address", pair_address)

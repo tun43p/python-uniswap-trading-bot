@@ -4,20 +4,20 @@ import dotenv
 from telethon import events, TelegramClient
 from web3 import Web3
 
-from helpers import env
+from helpers import environment
 
 
 dotenv.load_dotenv(dotenv_path=".env")
 
-is_env_variables_set = env.check_env_variables()
+is_env_variables_set = environment.check_env_variables()
 
 if not is_env_variables_set:
     raise Exception("Failed to set environment variables")
 
 telegram_client = TelegramClient(
     "limencello",
-    env.get_telegram_api_id(),
-    env.get_telegram_api_hash(),
+    environment.get_telegram_api_id(),
+    environment.get_telegram_api_hash(),
 )
 
 docker_image_tag = "tun43p/limoncello"
@@ -129,7 +129,7 @@ async def _limoncello():
         if not telegram_client.is_connected():
             raise ConnectionError(
                 "Failed to connect to Telegram with API_ID={}".format(
-                    env.get_telegram_api_id()
+                    environment.get_telegram_api_id()
                 )
             )
 
