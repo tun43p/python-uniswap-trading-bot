@@ -12,6 +12,7 @@ A smart and simple trading bot.
     - [Setup the environment variables](#setup-the-environment-variables)
     - [Start a single job](#start-a-single-job)
     - [Start a bot](#start-a-bot)
+      - [Example](#example)
   - [Authors](#authors)
   - [License](#license)
 
@@ -39,9 +40,16 @@ To start a single job, please do: `python3 main.py`.
 
 ### Start a bot
 
-To start a bot, please do: `python3 -m bot.bot_name bot/bot_name.py`.
+To start a bot, please do: `BOT_NAME="YOUR_BOT_NAME" python3 -m bot.bot_file bot/bot_file.py`.
 
-**Don't forget to set the environment variables**.
+**Don't forget to set the environment variables for your bot**.
+
+#### Example
+
+```bash
+cp .env.example env/smart.env
+BOT_NAME="smart" python3 -m bot.telegram_bot bot/telegram_bot.py
+```
 
 ## Authors
 
