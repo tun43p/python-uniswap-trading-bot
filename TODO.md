@@ -7,7 +7,10 @@
 - [x] Get tokens from Telegram and launch all the containers
 - [x] Create multiples jobs
 - [x] Create a logger to log to a file, to websocket and to Telegram
-- [ ] Fix gas issues
+- [x] Fix gas issues
+- [x] Fix price and liq issues
+- [ ] Create a real Telegram bot
+- [ ] Run linter and tests before building image
 
 ## P1
 
@@ -17,4 +20,4 @@
 
 - [ ] Calculate volaitility of the stock
 - [ ] Update Python version for local and Docker to match the same version
-- [] This this error when closing a container `Error in WebSocket connection: no close frame received or sent`
+- [ ] This this error when closing a container `Error in WebSocket connection: no close frame received or sent`
