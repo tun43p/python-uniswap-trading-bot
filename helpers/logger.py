@@ -3,6 +3,7 @@ import datetime
 import logging
 
 import colorama
+from web3 import Web3
 import websockets
 
 from helpers import environment, models
@@ -100,6 +101,9 @@ def txn(
         color = color_positive if value >= threshold else color_negative
         return f"{color}{value:.2f}%{colorama.Style.RESET_ALL}"
 
+    price_in_eth = Web3.from_wei(price_in_wei, "ether")
+    liquidity_in_eth = Web3.from_wei(liquidity_in_wei, "ether")
+
     action_color = colorama.Back.YELLOW
     if transaction_type == models.TransactionType.BUY:
         action_color = colorama.Back.GREEN
@@ -115,9 +119,9 @@ def txn(
 
     info(
         f"{action_color}[{transaction_type.name}]{colorama.Style.RESET_ALL} "
-        f"PRICE: {colorama.Fore.CYAN}{price_in_wei} WEI{colorama.Style.RESET_ALL} | "
+        f"PRICE: {colorama.Fore.CYAN}{price_in_eth} ETH{colorama.Style.RESET_ALL} | "
         f"CHANGE: {price_change_colorized_text} | "
-        f"LIQUIDITY: {colorama.Fore.YELLOW}{liquidity_in_wei}{colorama.Style.RESET_ALL} WEI"
+        f"LIQUIDITY: {colorama.Fore.YELLOW}{liquidity_in_eth} ETH{colorama.Style.RESET_ALL}"
         f"{f" | TXN HASH: {colorama.Fore.MAGENTA}{txn_hash}{colorama.Style.RESET_ALL}" if txn_hash else ''}",
         disable_ws_message=disable_ws_message,
     )

@@ -71,51 +71,39 @@ def get_eth_price_in_usd():
         logger.fatal(f"Failed to get ETH price: {error}")
 
 
-# TODO: What is this token price ?
-# https://ethereum.stackexchange.com/questions/145739/retrieve-the-current-price-of-a-erc20-token-from-uniswap-v2-router-using-web3js
 def get_token_price_in_wei(client: Web3, token_address: str):
     """
-    Get the current price of a token in ETH
+    Get the current price of a token in WEI
     """
     try:
         router = get_router(client)
 
         path = [
-            client.to_checksum_address(constants.WETH_CONTRACT_ADDRESS),
             client.to_checksum_address(token_address),
+            client.to_checksum_address(constants.WETH_CONTRACT_ADDRESS),
         ]
 
         return router.functions.getAmountsOut(
             client.to_wei(1, "ether"),
             path,
-        ).call()[1]
+        ).call()[-1]
     except Exception as error:
         logger.fatal(f"Failed to get token price: {error}")
 
 
-def get_pair_address(client: Web3, token_address: str):
+def get_token_liquidity_in_wei(client: Web3, token_address: str):
     """
-    Get the pair address of a token with ETH
+    Get the liquidity of a token in WEI
     """
 
     try:
         factory = get_factory(client)
 
-        return factory.functions.getPair(
+        pair_address = factory.functions.getPair(
             client.to_checksum_address(constants.WETH_CONTRACT_ADDRESS),
             client.to_checksum_address(token_address),
         ).call()
-    except Exception as error:
-        logger.fatal(f"Failed to get pair address: {error}")
 
-
-def get_token_liquidity(client: Web3, token_address: str):
-    """
-    Get the liquidity of a token
-    """
-
-    try:
-        pair_address = get_pair_address(client, token_address)
         pair = client.eth.contract(
             address=pair_address,
             abi=get_abi(pair_address),

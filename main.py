@@ -55,7 +55,7 @@ def main():
                 (current_price_in_wei - initial_price_in_wei) / initial_price_in_wei
             ) * 100
 
-            liquidity_in_wei = utils.get_token_liquidity(client, token_address)
+            liquidity_in_wei = utils.get_token_liquidity_in_wei(client, token_address)
 
             logger.txn(
                 transaction_type,

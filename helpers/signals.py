@@ -23,7 +23,7 @@ def buy(
         if balance < amount_in_wei:
             raise Exception("Insufficient funds")
 
-        liquidity = utils.get_token_liquidity(client, token_address)
+        liquidity = utils.get_token_liquidity_in_wei(client, token_address)
         if liquidity < amount_in_wei:
             raise Exception("Insufficient liquidity")
 
@@ -86,7 +86,7 @@ def sell(
         if token_balance < amount_in_wei:
             raise Exception("Insufficient funds")
 
-        liquidity = utils.get_token_liquidity(client, token_address)
+        liquidity = utils.get_token_liquidity_in_wei(client, token_address)
         if liquidity < amount_in_wei:
             raise Exception("Insufficient liquidity")
 
