@@ -19,6 +19,7 @@
 
 ## P2
 
+- [ ] Find another name for this project
 - [ ] Calculate volaitility of the stock
 - [ ] Update Python version for local and Docker to match the same version
 - [ ] This this error when closing a container `Error in WebSocket connection: no close frame received or sent`
