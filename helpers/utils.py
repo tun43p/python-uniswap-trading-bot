@@ -1,13 +1,14 @@
 import requests
 
-from web3 import Web3
+from web3 import Web3, contract
 
 from helpers import constants, environment, logger
 
 
-def get_client():
-    """
-    Get the Web3 client
+def get_client() -> Web3:
+    """Get the Web3 client based on the RPC URL.
+
+    :return Web3: The Web3 client.
     """
 
     try:
@@ -16,9 +17,11 @@ def get_client():
         logger.fatal(f"Failed to get client: {error}")
 
 
-def get_abi(address: str):
-    """
-    Get the ABI of a contract from Etherscan
+def get_abi(address: str) -> dict:
+    """Get the ABI from Etherscan based on the contract address.
+
+    :param str address: The contract address.
+    :return dict: The ABI of the contract.
     """
 
     try:
@@ -35,10 +38,13 @@ def get_abi(address: str):
         logger.fatal(f"Failed to get ABI for contract {address}: {error}")
 
 
-def get_router(client: Web3):
+def get_router(client: Web3) -> contract.Contract:
+    """Get the Uniswap V2 Router contract.
+
+    :param Web3 client: The Web3 client.
+    :return Contract: The Uniswap V2 Router contract.
     """
-    Get the Uniswap V2 Router contract
-    """
+
     try:
         address = constants.UNISWAP_V2_ROUTER_CONTRACT_ADDRESS
         return client.eth.contract(address=address, abi=get_abi(address))
@@ -46,9 +52,11 @@ def get_router(client: Web3):
         logger.fatal(f"Failed to get router for contract {address}: {error}")
 
 
-def get_factory(client: Web3):
-    """
-    Get the Uniswap V2 Factory contract
+def get_factory(client: Web3) -> contract.Contract:
+    """Get the Uniswap V2 Factory contract.
+
+    :param Web3 client: The Web3 client.
+    :return Contract: The Uniswap V2 Factory contract.
     """
 
     try:
@@ -58,23 +66,14 @@ def get_factory(client: Web3):
         logger.fatal(f"Failed to get factory for contract {address}: {error}")
 
 
-def get_eth_price_in_usd():
-    """
-    Get the current price of Ethereum in USD
-    """
-    try:
-        return requests.get(
-            "https://api.coingecko.com/api/v3/simple/price",
-            params={"ids": "ethereum", "vs_currencies": "usd"},
-        ).json()["ethereum"]["usd"]
-    except Exception as error:
-        logger.fatal(f"Failed to get ETH price: {error}")
+def get_token_price_in_wei(client: Web3, token_address: str) -> int:
+    """Get the token price in WEI.
 
+    :param Web3 client: The Web3 client.
+    :param str token_address: The token address.
+    :return int: The token price in WEI.
+    """
 
-def get_token_price_in_wei(client: Web3, token_address: str):
-    """
-    Get the current price of a token in WEI
-    """
     try:
         router = get_router(client)
 
@@ -91,9 +90,12 @@ def get_token_price_in_wei(client: Web3, token_address: str):
         logger.fatal(f"Failed to get token price: {error}")
 
 
-def get_token_liquidity_in_wei(client: Web3, token_address: str):
-    """
-    Get the liquidity of a token in WEI
+def get_token_liquidity_in_wei(client: Web3, token_address: str) -> int:
+    """Get the token liquidity in WEI.
+
+    :param Web3 client: The Web3 client.
+    :param str token_address: The token address.
+    :return int: The token liquidity in WEI.
     """
 
     try:
@@ -114,9 +116,12 @@ def get_token_liquidity_in_wei(client: Web3, token_address: str):
         logger.fatal(f"Failed to get token liquidity: {error}")
 
 
-def get_token_balance(client: Web3, token_address: str):
-    """
-    Get the token balance of the wallet
+def get_token_balance(client: Web3, token_address: str) -> int:
+    """Get the token balance of the wallet.
+
+    :param Web3 client: The Web3 client.
+    :param str token_address: The token address.
+    :return int: The token balance.
     """
 
     try:

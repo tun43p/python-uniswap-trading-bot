@@ -8,10 +8,15 @@ def test_job(
     token_address: str,
     initial_price_in_wei: int,
 ) -> tuple[models.TransactionType, int, int, str | None]:
-    """
-    Test trading strategy
+    """Test trading strategy.
 
-    If the price increase by 2%, sell 100%
+    - If the price increase by 2%, sell 100%.
+
+    :param Web3 client: The Web3 client.
+    :param str token_address: The token address.
+    :param int initial_price_in_wei: The initial price in WEI.
+    :return tuple[models.TransactionType, int, int, str | None]: The transaction type,
+        current price, token balance, and transaction hash.
     """
 
     current_price = utils.get_token_price_in_wei(client, token_address)

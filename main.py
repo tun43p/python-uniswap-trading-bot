@@ -12,7 +12,9 @@ if os.path.exists("env/local.env") and not environment.get_websocket_uri():
 BUY_AT_START = False
 
 
-def main():
+def main() -> None:
+    """Run the main job."""
+
     client = utils.get_client()
     if not client.is_connected():
         raise ConnectionError(

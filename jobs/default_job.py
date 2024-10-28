@@ -8,11 +8,17 @@ def default_job(
     token_address: str,
     initial_price_in_wei: int,
 ) -> tuple[models.TransactionType, int, int, str | None]:
-    """
-    Default trading strategy
-    - Buy if the price drops by -10%
+    """Default trading strategy.
+
+    - Buy if the price drops by -10%.
     - Sell 100% if -30%, 50% if +100%, 10% at +500%, +1000%, +5000%, +10000%, and all
-      at +20000%
+      at +20000%.
+
+    :param Web3 client: The Web3 client.
+    :param str token_address: The token address.
+    :param int initial_price_in_wei: The initial price in WEI.
+    :return tuple[models.TransactionType, int, int, str | None]: The transaction type,
+        current price, token balance, and transaction hash.
     """
 
     current_price = utils.get_token_price_in_wei(client, token_address)
