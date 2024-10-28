@@ -156,11 +156,6 @@ async def _status_command(event: events.NewMessage.Event):
 async def _new_message_handler(event: events.NewMessage.Event):
     message = event.message.message
 
-    print(event)
-
-    if event.is_channel:  # Vérifiez si c'est le bon canal
-        print(f"Channel ID: {event.chat.id}")
-
     try:
         if message.startswith("/trade") and "0x" in message:
             await _start_command(event)
@@ -198,6 +193,21 @@ async def _handle_websocket_connection(
 
             log_message = f"{token} {message}"
 
+            # TODO: Check if the message send works
+            if "[BUY]" in log_message or "[SELL]" in log_message:
+                try:
+                    _log(
+                        events.NewMessage.Event(
+                            message_id=0,
+                            chat_id=telegram_channel_id,
+                            message=log_message,
+                        ),
+                        log_message,
+                        without_print=True,
+                    )
+                except Exception as error:
+                    print(f"Failed to send message to Telegram: {error}")
+
             if level == "ERROR" or level == "CRITICAL" or level == "FATAL":
                 log_message = (
                     f"{colorama.Fore.RED}{log_message}{colorama.Style.RESET_ALL}"
@@ -224,16 +234,12 @@ async def _handle_websocket_connection(
 
 async def _main():
     try:
-        capitalize_bot_name = BOT_NAME.replace("_", " ").replace("-", " ").title()
-
         await telegram_client.start(bot_token=telegram_bot_token)
 
         if not telegram_client.is_connected():
             raise ConnectionError(
                 "Failed to connect to Telegram with API_ID={}".format(telegram_api_id)
             )
-
-        # telegram_channel_entity = await telegram_client.get_entity(telegram_channel_id)
 
         if len(docker_client.images.list(name=docker_image_tag)) > 0:
             print("Removing existing Docker containers...")
@@ -283,10 +289,10 @@ async def _main():
         )
 
         async with websocket_server:
-            print(f"{capitalize_bot_name} started!")
+            print(f"Bot {BOT_NAME} started!")
             await telegram_client.run_until_disconnected()
     except Exception as error:
-        print(f"Failed to start {capitalize_bot_name}: {error}")
+        print(f"Failed to start {BOT_NAME} bot: {error}")
 
 
 telegram_client.loop.run_until_complete(_main())

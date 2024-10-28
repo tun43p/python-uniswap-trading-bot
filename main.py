@@ -2,11 +2,14 @@ import os
 import dotenv
 import time
 
-from helpers import environment, logger, utils
-from jobs.default_job import default_job
+from helpers import environment, logger, models, signals, utils
+from jobs.test_job import test_job
 
 if os.path.exists("env/local.env") and not environment.get_websocket_uri():
     dotenv.load_dotenv(dotenv_path="env/local.env")
+
+# TODO: Remove this logic after testing
+BUY_AT_START = False
 
 
 def main():
@@ -27,41 +30,38 @@ def main():
 
     logger.info("Running default_job")
 
-    # TODO: DELETE THIS !! THIS BUY AT START
-    # txn_hash = signals.buy(client, token_address, client.to_wei(0.002, "ether"))
-    # current_price_in_eth = client.from_wei(initial_price_in_wei, "ether")
-    # price_change_percent = (
-    #     (current_price_in_eth - client.from_wei(initial_price_in_wei, "ether"))
-    #     / client.from_wei(initial_price_in_wei, "ether")
-    # ) * 100
-    # log.log_txn(
-    #     token_address,
-    #     models.TransactionType.BUY,
-    #     initial_price_in_wei,
-    #     current_price_in_eth,
-    #     price_change_percent,
-    #     txn_hash,
-    # )
+    if BUY_AT_START:
+        txn_hash = signals.buy(client, token_address, client.to_wei(0.002, "ether"))
+        current_price_in_eth = client.from_wei(initial_price_in_wei, "ether")
+        price_change_percent = (
+            (current_price_in_eth - client.from_wei(initial_price_in_wei, "ether"))
+            / client.from_wei(initial_price_in_wei, "ether")
+        ) * 100
+        logger.txn(
+            models.TransactionType.BUY,
+            initial_price_in_wei,
+            current_price_in_eth,
+            price_change_percent,
+            txn_hash,
+        )
 
     while True:
         try:
-            transaction_type, current_price_in_wei, token_balance_in_wei, message = (
-                default_job(client, token_address, initial_price_in_wei)
+            transaction_type, current_price_in_wei, _, message = test_job(
+                client, token_address, initial_price_in_wei
             )
 
-            current_price_in_eth = client.from_wei(current_price_in_wei, "ether")
             price_change_percent = (
-                (current_price_in_eth - client.from_wei(initial_price_in_wei, "ether"))
-                / client.from_wei(initial_price_in_wei, "ether")
+                (current_price_in_wei - initial_price_in_wei) / initial_price_in_wei
             ) * 100
 
-            liquidity = utils.get_token_liquidity(client, token_address)
+            liquidity_in_wei = utils.get_token_liquidity(client, token_address)
 
             logger.txn(
                 transaction_type,
-                current_price_in_eth,
+                current_price_in_wei,
                 price_change_percent,
-                liquidity,
+                liquidity_in_wei,
                 message,
             )
 

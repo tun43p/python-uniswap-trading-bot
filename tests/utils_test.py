@@ -69,21 +69,6 @@ def _get_token_balance_test(client: Web3, token_address: str):
     assert token_balance is not None, "Token balance is None"
 
 
-def _get_gas_price_in_wei_test(client: Web3):
-    gas_price_in_wei = utils.get_gas_price_in_wei(client)
-    print("gas_price_in_wei", gas_price_in_wei)
-    assert gas_price_in_wei is not None, "Gas price is None"
-
-
-def _get_gas_price_for_transaction_in_wei_test(client: Web3, token_address: str):
-    gas_price_for_transaction_in_wei = utils.get_gas_price_for_transaction_in_wei(
-        client, token_address, 1
-    )
-
-    print("gas_price_for_transaction_in_wei", gas_price_for_transaction_in_wei)
-    assert gas_price_for_transaction_in_wei is not None, "Gas price is None"
-
-
 def run_all_tests(client: Web3, token_address: str):
     _get_abi_test(token_address)
     _get_router_test(client)
@@ -93,5 +78,3 @@ def run_all_tests(client: Web3, token_address: str):
     _get_pair_address_test(client, token_address)
     _get_token_liquidity_test(client, token_address)
     _get_token_balance_test(client, token_address)
-    _get_gas_price_in_wei_test(client)
-    _get_gas_price_for_transaction_in_wei_test(client, token_address)

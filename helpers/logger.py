@@ -88,9 +88,9 @@ def fatal(message: str, disable_ws_message: bool = False) -> None:
 
 def txn(
     transaction_type: models.TransactionType,
-    price_eth: int | float,
+    price_in_wei: int | float,
     price_change_percent: int | float,
-    liquidity_in_eth: int | float,
+    liquidity_in_wei: int | float,
     txn_hash: str | None,
     disable_ws_message: bool = False,
 ):
@@ -115,8 +115,9 @@ def txn(
 
     info(
         f"{action_color}[{transaction_type.name}]{colorama.Style.RESET_ALL} "
-        f"PRICE: {colorama.Fore.CYAN}{price_eth:.8f} ETH{colorama.Style.RESET_ALL} | "
+        f"PRICE: {colorama.Fore.CYAN}{price_in_wei} WEI{colorama.Style.RESET_ALL} | "
         f"CHANGE: {price_change_colorized_text} | "
-        f"LIQUIDITY: {colorama.Fore.YELLOW}{liquidity_in_eth}{colorama.Style.RESET_ALL}"
-        f"{f" | TXN HASH: {colorama.Fore.MAGENTA}{txn_hash}{colorama.Style.RESET_ALL}" if txn_hash else ''}"
+        f"LIQUIDITY: {colorama.Fore.YELLOW}{liquidity_in_wei}{colorama.Style.RESET_ALL} WEI"
+        f"{f" | TXN HASH: {colorama.Fore.MAGENTA}{txn_hash}{colorama.Style.RESET_ALL}" if txn_hash else ''}",
+        disable_ws_message=disable_ws_message,
     )

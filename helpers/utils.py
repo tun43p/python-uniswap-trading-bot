@@ -71,6 +71,8 @@ def get_eth_price_in_usd():
         logger.fatal(f"Failed to get ETH price: {error}")
 
 
+# TODO: What is this token price ?
+# https://ethereum.stackexchange.com/questions/145739/retrieve-the-current-price-of-a-erc20-token-from-uniswap-v2-router-using-web3js
 def get_token_price_in_wei(client: Web3, token_address: str):
     """
     Get the current price of a token in ETH
@@ -142,37 +144,3 @@ def get_token_balance(client: Web3, token_address: str):
         )
     except Exception as error:
         logger.fatal(f"Failed to get token balance: {error}")
-
-
-def get_gas_price_in_wei(client: Web3):
-    """
-    Get the current gas price
-    """
-
-    try:
-        # TODO: Check if this is correct or not
-        return client.eth.gas_price
-    except Exception as error:
-        logger.fatal(f"Failed to get gas price: {error}")
-
-
-def get_gas_price_for_transaction_in_wei(
-    client: Web3, token_address: str, amount_in_wei: int
-):
-    """
-    Get the gas estimation for a transaction * 2 for safety
-    """
-
-    try:
-        estimate_gas = client.eth.estimate_gas(
-            {
-                "from": client.to_checksum_address(environment.get_public_key()),
-                "to": client.to_checksum_address(token_address),
-                "value": amount_in_wei,
-            }
-        )
-
-        # TODO: Check if this is correct or not
-        return int(estimate_gas * 2)
-    except Exception as error:
-        logger.fatal(f"Failed to get gas price for transaction: {error}")

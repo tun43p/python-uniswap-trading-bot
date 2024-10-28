@@ -32,7 +32,7 @@ def default_job(
             txn_hash = signals.sell(client, token_address, token_balance * 0.5)
             return (models.TransactionType.SELL, current_price, token_address, txn_hash)
 
-        for multiplier in [5, 10, 50, 100, 200]:
+        for multiplier in [5, 10, 25, 50, 100]:
             if current_price >= initial_price_in_wei * multiplier:
                 txn_hash = signals.sell(client, token_address, token_balance * 0.1)
                 return (
