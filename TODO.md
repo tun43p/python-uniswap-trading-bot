@@ -15,6 +15,7 @@
 ## P1
 
 - [x] Setup Ruff has linter
+- [x] Document all methods
 
 ## P2
 

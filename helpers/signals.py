@@ -8,9 +8,14 @@ def buy(
     token_address: str,
     amount_in_wei: int,
     slippage_percent: int | float = constants.SLIPPAGE_PERCENT,
-):
-    """
-    Buy a token from Uniswap V2
+) -> str:
+    """Buy a token on Uniswap V2
+
+    :param Web3 client: The Web3 client.
+    :param str token_address: The token address.
+    :param int amount_in_wei: The amount in wei to buy.
+    :param int | float slippage_percent: The slippage percentage.
+    :return str: The transaction hash.
     """
 
     try:
@@ -74,9 +79,14 @@ def sell(
     token_address: str,
     amount_in_wei: int,
     slippage_percent: int | float = constants.SLIPPAGE_PERCENT,
-):
-    """
-    Sell a token on Uniswap V2
+) -> str:
+    """Sell a token on Uniswap V2
+
+    :param Web3 client: The Web3 client.
+    :param str token_address: The token address.
+    :param int amount_in_wei: The amount in wei to sell.
+    :param int | float slippage_percent: The slippage percentage.
+    :return str: The transaction hash.
     """
 
     try:
@@ -129,9 +139,13 @@ def sell(
         logger.fatal(error)
 
 
-def _approve(client: Web3, token_address: str, amount_in_wei: int):
-    """
-    Approve a token for spending by another address (e.g., Uniswap Router)
+def _approve(client: Web3, token_address: str, amount_in_wei: int) -> str:
+    """Approve a token on Uniswap V2
+
+    :param Web3 client: The Web3 client.
+    :param str token_address: The token address.
+    :param int amount_in_wei: The amount in wei to approve.
+    :return str: The transaction hash.
     """
 
     try:
@@ -154,12 +168,18 @@ def _approve(client: Web3, token_address: str, amount_in_wei: int):
 
         return _sign(client, txn, is_approval=True)
     except Exception as error:
+        # TODO: Retry if failed
+
         logger.fatal(f"Approval failed: {error}")
 
 
-def _sign(client: Web3, txn: dict, is_approval: bool = False):
-    """
-    Sign a transaction
+def _sign(client: Web3, txn: dict, is_approval: bool = False) -> str:
+    """Sign a transaction and calculate the gas price.
+
+    :param Web3 client: The Web3 client.
+    :param dict txn: The transaction dictionary.
+    :param bool is_approval: If the transaction is an approval.
+    :return str: The transaction hash.
     """
 
     try:
@@ -184,4 +204,6 @@ def _sign(client: Web3, txn: dict, is_approval: bool = False):
 
         return txn_hash
     except Exception as error:
+        # TODO: Retry if failed
+
         logger.fatal(f"{'Approval' if is_approval else 'Transaction'} failed: {error}")

@@ -52,8 +52,18 @@ telegram_client = TelegramClient(BOT_NAME, telegram_api_id, telegram_api_hash)
 
 
 async def _log(
-    event: events.NewMessage.Event, message: str, without_print: bool = False
-):
+    event: events.NewMessage.Event,
+    message: str,
+    without_print: bool = False,
+) -> None:
+    """Log the message to the console and send it to the Telegram channel.
+
+    :param events.NewMessage.Event event: The event object of the new message.
+    :param str message: The message to log and send.
+    :param bool without_print: If the message should not be printed to the console.
+    :return None:
+    """
+
     if not without_print:
         print(message)
 
@@ -63,7 +73,13 @@ async def _log(
     )
 
 
-async def _start_command(event: events.NewMessage.Event):
+async def _start_command(event: events.NewMessage.Event) -> None:
+    """Start a Docker instance of the trading bot with the given token address.
+
+    :param events.NewMessage.Event event: The event object of the new message.
+    :return None:
+    """
+
     token = f"0x{event.message.message.split('0x')[1]}"
 
     try:
@@ -99,7 +115,13 @@ async def _start_command(event: events.NewMessage.Event):
         _log(event, f"Failed to start trading with token {token}: {error}")
 
 
-async def _stop_command(event: events.NewMessage.Event):
+async def _stop_command(event: events.NewMessage.Event) -> None:
+    """Stop the Docker instance of the trading bot with the given token address.
+
+    :param events.NewMessage.Event event: The event object of the new message.
+    :return None:
+    """
+
     token = f"0x{event.message.message.split('0x')[1]}"
 
     try:
@@ -125,7 +147,13 @@ async def _stop_command(event: events.NewMessage.Event):
         await _log(event, f"Failed to stop trading with token {token}: {error}")
 
 
-async def _stop_all_command(event: events.NewMessage.Event):
+async def _stop_all_command(event: events.NewMessage.Event) -> None:
+    """Stop all Docker instances of the trading bot.
+
+    :param events.NewMessage.Event event: The event object of the new message.
+    :return None:
+    """
+
     containers = docker_client.containers.list(all=True)
 
     if not any("0x" in container.name for container in containers):
@@ -142,7 +170,13 @@ async def _stop_all_command(event: events.NewMessage.Event):
             await _log(event, f"Container {container.name} is deleted!")
 
 
-async def _status_command(event: events.NewMessage.Event):
+async def _status_command(event: events.NewMessage.Event) -> None:
+    """Get the status of the Docker instances of the trading bot.
+
+    :param events.NewMessage.Event event: The event object of the new message.
+    :return None:
+    """
+
     containers = docker_client.containers.list(all=True)
 
     if not containers:
@@ -153,7 +187,13 @@ async def _status_command(event: events.NewMessage.Event):
         await _log(event, f"Container {container.name} is running!")
 
 
-async def _new_message_handler(event: events.NewMessage.Event):
+async def _new_message_handler(event: events.NewMessage.Event) -> None:
+    """Handle the new messages from the Telegram channel.
+
+    :param events.NewMessage.Event event: The event object of the new message.
+    :return None:
+    """
+
     message = event.message.message
 
     try:
@@ -182,7 +222,14 @@ async def _new_message_handler(event: events.NewMessage.Event):
 async def _handle_websocket_connection(
     websocket: websockets.WebSocketServerProtocol,
     path: str,
-):
+) -> None:
+    """Handle the WebSocket connection.
+
+    :param websockets.WebSocketServerProtocol websocket: The WebSocket client.
+    :param str path: The path of the WebSocket connection.
+    :return None:
+    """
+
     global connected_clients
     connected_clients[path] = websocket
 
@@ -232,7 +279,12 @@ async def _handle_websocket_connection(
         connected_clients.pop(path, None)
 
 
-async def _main():
+async def _main() -> None:
+    """Start the Telegram bot and the WebSocket server.
+
+    :return None:
+    """
+
     try:
         await telegram_client.start(bot_token=telegram_bot_token)
 

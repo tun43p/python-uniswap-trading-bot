@@ -20,6 +20,13 @@ logging.basicConfig(
 
 
 def _format_message(message: str, logging_level: int = logging.INFO) -> str:
+    """Format the message with the current timestamp, token address, and logging level.
+
+    :param str message: The message to be formatted.
+    :param int logging_level: The logging level.
+    :return str: The formatted message.
+    """
+
     from helpers import environment
 
     return "{}::{}::{}::{}".format(
@@ -31,6 +38,13 @@ def _format_message(message: str, logging_level: int = logging.INFO) -> str:
 
 
 async def _send_ws_message(message: str, logging_level: int = logging.INFO) -> None:
+    """Send the message to the WebSocket server.
+
+    :param str message: The message to be sent.
+    :param int logging_level: The logging level.
+    :return None:
+    """
+
     from helpers import environment
 
     try:
@@ -44,6 +58,13 @@ async def _send_ws_message(message: str, logging_level: int = logging.INFO) -> N
 
 
 def info(message: str, disable_ws_message: bool = False) -> None:
+    """Log an informational message.
+
+    :param str message: The message to be logged.
+    :param bool disable_ws_message: If the message should not be sent to the server.
+    :return None:
+    """
+
     logging.info(_format_message(message))
 
     if environment.get_websocket_uri() or disable_ws_message:
@@ -51,6 +72,13 @@ def info(message: str, disable_ws_message: bool = False) -> None:
 
 
 def debug(message: str, disable_ws_message: bool = False) -> None:
+    """Log a debug message.
+
+    :param str message: The message to be logged.
+    :param bool disable_ws_message: If the message should not be sent to the server.
+    :return None:
+    """
+
     logging.debug(_format_message(message, logging.DEBUG))
 
     if environment.get_websocket_uri() or disable_ws_message:
@@ -58,6 +86,13 @@ def debug(message: str, disable_ws_message: bool = False) -> None:
 
 
 def warning(message: str, disable_ws_message: bool = False) -> None:
+    """Log a warning message.
+
+    :param str message: The message to be logged.
+    :param bool disable_ws_message: If the message should not be sent to the server.
+    :return None:
+    """
+
     logging.warning(_format_message(message, logging.WARNING))
 
     if environment.get_websocket_uri() or disable_ws_message:
@@ -65,6 +100,13 @@ def warning(message: str, disable_ws_message: bool = False) -> None:
 
 
 def error(message: str, disable_ws_message: bool = False) -> None:
+    """Log an error message.
+
+    :param str message: The message to be logged.
+    :param bool disable_ws_message: If the message should not be sent to the server.
+    :return None:
+    """
+
     logging.error(_format_message(message, logging.ERROR))
 
     if environment.get_websocket_uri() or disable_ws_message:
@@ -72,6 +114,13 @@ def error(message: str, disable_ws_message: bool = False) -> None:
 
 
 def critical(message: str, disable_ws_message: bool = False) -> None:
+    """Log a critical message.
+
+    :param str message: The message to be logged.
+    :param bool disable_ws_message: If the message should not be sent to the server.
+    :return None:
+    """
+
     logging.critical(_format_message(message, logging.CRITICAL))
 
     if environment.get_websocket_uri() or disable_ws_message:
@@ -79,6 +128,13 @@ def critical(message: str, disable_ws_message: bool = False) -> None:
 
 
 def fatal(message: str, disable_ws_message: bool = False) -> None:
+    """Log a fatal message.
+
+    :param str message: The message to be logged.
+    :param bool disable_ws_message: If the message should not be sent to the server.
+    :return None:
+    """
+
     logging.fatal(_format_message(message, logging.FATAL))
 
     if environment.get_websocket_uri() or disable_ws_message:
@@ -94,7 +150,18 @@ def txn(
     liquidity_in_wei: int | float,
     txn_hash: str | None,
     disable_ws_message: bool = False,
-):
+) -> None:
+    """Log a transaction message.
+
+    :param models.TransactionType transaction_type: The type of the transaction.
+    :param int | float price_in_wei: The price in wei.
+    :param int | float price_change_percent: The price change percentage.
+    :param int | float liquidity_in_wei: The liquidity in wei.
+    :param str | None txn_hash: The transaction hash.
+    :param bool disable_ws_message: If the message should not be sent to the server.
+    :return None:
+    """
+
     def format_colorized(value, threshold, color_positive, color_negative):
         """Return colorized string based on the threshold."""
 
