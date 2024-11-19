@@ -3,7 +3,7 @@ from web3 import Web3
 from helpers import utils, models, signals
 
 
-def test_job(
+def example_job(
     client: Web3,
     token_address: str,
     initial_price_in_wei: int,

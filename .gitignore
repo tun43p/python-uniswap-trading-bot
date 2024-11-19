@@ -11,3 +11,7 @@ env/
 logs/
 
 .ruff_cache/
+
+jobs/*
+!jobs/__init__.py
+!jobs/example_job.py

@@ -3,7 +3,7 @@ import dotenv
 import time
 
 from helpers import environment, logger, models, signals, utils
-from jobs.test_job import test_job
+from jobs.example_job import example_job
 
 if os.path.exists("env/local.env") and not environment.get_websocket_uri():
     dotenv.load_dotenv(dotenv_path="env/local.env")
@@ -49,7 +49,7 @@ def main() -> None:
 
     while True:
         try:
-            transaction_type, current_price_in_wei, _, message = test_job(
+            transaction_type, current_price_in_wei, _, message = example_job(
                 client, token_address, initial_price_in_wei
             )
 
